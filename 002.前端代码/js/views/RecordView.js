@@ -2,7 +2,7 @@
 import { store, EV } from '../store.js';
 import { router } from '../router.js';
 import { getCategories } from '../data/categories.js';
-import { defaultAccounts, sampleRecords } from '../data/accounts.js';
+import { defaultAccounts } from '../data/accounts.js';
 import { today } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { CategoryPicker } from '../components/CategoryPicker.js';
@@ -17,9 +17,8 @@ export class RecordView {
   }
 
   mount() {
-    // 初始化示例数据
-    if (store.records.length === 0) {
-      store.records = [...sampleRecords];
+    // 初始化默认账户（新用户也需要有账户可选）
+    if (store.accounts.length === 0) {
       store.accounts = defaultAccounts.map(a => ({ ...a }));
     }
     this.render();

@@ -12,15 +12,32 @@ export class CategoryPicker {
 
   render() {
     this.el.innerHTML = `<div class="category-picker">
-      ${this.cats.map(c => `<div class="category-chip${c.id === this.selectedId ? ' selected' : ''}" data-cid="${c.id}">
-        <span class="category-chip__icon">${c.icon}</span>
-        <span class="category-chip__name">${c.name}</span>
-      </div>`).join('')}
+      ${this.cats.map(c => `
+        <div class="category-chip${c.id === this.selectedId ? ' selected' : ''}"
+             data-cid="${c.id}">
+          <span class="category-chip__icon">${c.icon}</span>
+          <span class="category-chip__name">${c.name}</span>
+        </div>
+      `).join('')}
     </div>`;
-    this.el.querySelector('.category-picker')?.addEventListener('click', (e) => {
+
+    const picker = this.el.querySelector('.category-picker');
+    if (!picker) return;
+
+    // 跟踪触摸位移，区分"点击"和"滑动"
+    let startX = 0, startY = 0;
+    picker.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    // 只响应 click（移动端 tap），不阻止滑动
+    picker.addEventListener('click', (e) => {
       const chip = e.target.closest('.category-chip');
       if (!chip) return;
-      this.selectedId = parseInt(chip.dataset.cid);
+      const cid = parseInt(chip.dataset.cid);
+      if (isNaN(cid)) return;
+      this.selectedId = cid;
       this.updateUI();
       const cat = this.cats.find(c => c.id === this.selectedId);
       if (cat && this.onChange) this.onChange(cat);

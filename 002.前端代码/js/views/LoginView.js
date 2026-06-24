@@ -38,9 +38,7 @@ export class LoginView {
         </div>
       </div>`;
 
-    // 绑定登录按钮
     document.getElementById('login-btn').addEventListener('click', () => this.handleLogin());
-    // 回车键登录
     document.getElementById('login-pass').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleLogin();
     });
@@ -57,7 +55,6 @@ export class LoginView {
     if (err) err.textContent = '';
     if (btn) { btn.textContent = '登录中...'; btn.disabled = true; }
 
-    // ---- 调用后端登录 API ----
     const res = await login(u, p);
 
     if (!res.ok) {
@@ -66,23 +63,14 @@ export class LoginView {
       return;
     }
 
-    // ---- 保存 token 和用户信息 ----
+    // 保存登录状态
     setToken(res.data.token);
     setCurrentUser(res.data.user);
 
-    // ---- 欢迎动画 ----
-    this.container.innerHTML = `
-      <div class="view active" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90dvh">
-        <div style="font-size:72px;animation:bounceIn .5s var(--ease)">🌸</div>
-        <div style="font-size:22px;font-weight:700;color:var(--color-primary-dark);margin-top:16px">欢迎回来，${u}</div>
-        <div style="font-size:14px;color:var(--color-text-secondary);margin-top:8px">正在进入记账本...</div>
-      </div>`;
-
-    // TabBar 出现
+    // 显示 TabBar 并直接跳转记账页
     const tb = document.getElementById('tab-bar');
     if (tb) tb.style.display = 'flex';
-
-    setTimeout(() => { router.go('#/record'); }, 800);
+    window.location.hash = '#/record';
   }
 
   destroy() {}

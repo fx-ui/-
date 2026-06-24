@@ -35,9 +35,9 @@
 .type-toggle__btn.active.income{color:var(--color-income)}
 
 /* --- 分类选择器 --- */
-.category-picker{display:flex;gap:var(--space-sm);overflow-x:auto;padding:var(--space-sm) 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.category-picker{display:flex;gap:var(--space-sm);overflow-x:auto;padding:var(--space-sm) 0;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x}
 .category-picker::-webkit-scrollbar{display:none}
-.category-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:var(--space-xs);padding:var(--space-md) var(--space-lg);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-card);min-width:64px;transition:all .15s;cursor:pointer;user-select:none}
+.category-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:var(--space-xs);padding:var(--space-md) var(--space-lg);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-card);min-width:64px;transition:all .15s;cursor:pointer;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .category-chip:active{transform:scale(.93)}
 .category-chip.selected{background:var(--color-primary-light);box-shadow:0 2px 8px rgba(255,182,193,.3)}
 .category-chip__icon{font-size:24px}

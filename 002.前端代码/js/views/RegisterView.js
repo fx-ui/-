@@ -42,9 +42,7 @@ export class RegisterView {
         </div>
       </div>`;
 
-    // 绑定注册按钮
     document.getElementById('reg-btn').addEventListener('click', () => this.handleRegister());
-    // 回车键注册
     document.getElementById('reg-pass2').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleRegister();
     });
@@ -63,7 +61,6 @@ export class RegisterView {
     if (err) err.textContent = '';
     if (btn) { btn.textContent = '注册中...'; btn.disabled = true; }
 
-    // ---- 调用后端注册 API ----
     const res = await register(u, p);
 
     if (!res.ok) {
@@ -72,22 +69,14 @@ export class RegisterView {
       return;
     }
 
-    // ---- 保存 token 和用户信息 ----
+    // 保存登录状态
     setToken(res.data.token);
     setCurrentUser(res.data.user);
 
-    // ---- 欢迎动画 ----
-    this.container.innerHTML = `
-      <div class="view active" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90dvh">
-        <div style="font-size:72px;animation:bounceIn .5s var(--ease)">🌟</div>
-        <div style="font-size:22px;font-weight:700;color:var(--color-primary-dark);margin-top:16px">欢迎加入，${u}</div>
-        <div style="font-size:14px;color:var(--color-text-secondary);margin-top:8px">马上开始第一笔记账吧～</div>
-      </div>`;
-
+    // 显示 TabBar 并直接跳转记账页
     const tb = document.getElementById('tab-bar');
     if (tb) tb.style.display = 'flex';
-
-    setTimeout(() => { router.go('#/record'); }, 800);
+    window.location.hash = '#/record';
   }
 
   destroy() {}
