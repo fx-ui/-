@@ -6,7 +6,8 @@ import { RecordView } from './views/RecordView.js';
 import { BillListView } from './views/BillListView.js';
 import { StatsView } from './views/StatsView.js';
 import { SettingsView } from './views/SettingsView.js';
-import { LoginView, isLoggedIn } from './views/LoginView.js';
+import { LoginView } from './views/LoginView.js';
+import { isLoggedIn } from './api.js';
 import { RegisterView } from './views/RegisterView.js';
 
 let tabBar = null;

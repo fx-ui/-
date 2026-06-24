@@ -6,7 +6,7 @@ import { fmtMoney } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { Modal } from '../components/Modal.js';
 import { getCategories } from '../data/categories.js';
-import { getCurrentUser, doLogout, isLoggedIn } from './LoginView.js';
+import { getCurrentUser, isLoggedIn, removeToken, removeCurrentUser } from '../api.js';
 
 export class SettingsView {
   constructor(container, subpage) {
@@ -28,6 +28,17 @@ export class SettingsView {
   // ===== 主页面 =====
   renderMain() {
     const user = getCurrentUser();
+
+    // 格式化注册时间
+    let regDate = '';
+    if (user && user.created_at) {
+      const d = new Date(user.created_at);
+      regDate = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
+    // 显示昵称，没有则显示用户名
+    const displayName = user ? (user.nickname || user.username) : '每日记账';
+
     const totalAssets = store.accounts.reduce((s, a) => s + (a.balance || 0), 0);
     const recordCount = store.records.length;
 
@@ -37,8 +48,11 @@ export class SettingsView {
 
         <div class="card mb-lg" style="background:linear-gradient(135deg, var(--color-primary-light), var(--color-bg));text-align:center">
           <div style="font-size:48px;margin-bottom:4px">🌸</div>
-          <div style="font-size:var(--text-lg);font-weight:700;color:var(--color-primary-dark)">${user ? user.username : '每日记账'}</div>
+          <div style="font-size:var(--text-lg);font-weight:700;color:var(--color-primary-dark)">${displayName}</div>
           <div class="text-secondary" style="font-size:12px;margin-top:4px">
+            ${regDate ? `📅 ${regDate} 加入` : ''}
+          </div>
+          <div class="text-secondary" style="font-size:12px;margin-top:2px">
             已记 ${recordCount} 笔 · 资产 ${fmtMoney(totalAssets)}
           </div>
           <button class="btn btn--sm btn--outline mt-md" id="settings-logout" style="color:var(--color-expense);border-color:var(--color-expense)">🚪 退出登录</button>
@@ -72,7 +86,8 @@ export class SettingsView {
     this.container.querySelector('#settings-logout')?.addEventListener('click', () => {
       // 原生 confirm 最可靠
       if (confirm('确定要退出登录吗？\n本地记账数据不会丢失')) {
-        doLogout();
+        removeToken();
+        removeCurrentUser();
         // 直接设置 hash + 手动隐藏 TabBar
         window.location.hash = '#/login';
         const tb = document.getElementById('tab-bar');
