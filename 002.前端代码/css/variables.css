@@ -1,0 +1,60 @@
+/* ===== 每日记账 — 设计变量 ===== */
+:root {
+  /* 主色 */
+  --color-primary:       #FFB6C1;
+  --color-primary-light: #FFD6E0;
+  --color-primary-dark:  #FF9AAE;
+  --color-bg:            #FFF0F3;
+  --color-surface:       #FFFFFF;
+
+  /* 语义色 */
+  --color-income:        #B8E6D0;
+  --color-expense:       #FF8A80;
+  --color-warning:       #FFD166;
+  --color-accent:        #C599E8;
+  --color-success:       #81C784;
+  --color-danger:        #E57373;
+
+  /* 文字 */
+  --color-text:          #2D2D2D;
+  --color-text-secondary:#888888;
+  --color-text-light:    #BBBBBB;
+
+  /* 圆角 */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-btn: 24px;
+
+  /* 阴影 */
+  --shadow-card:  0 2px 12px rgba(255,182,193,0.15);
+  --shadow-float: 0 4px 16px rgba(255,182,193,0.25);
+
+  /* 间距 */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* 字号 */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  /* 字体 */
+  --font: 'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+  --font-number: 'SF Mono','Menlo',monospace;
+
+  /* 过渡 */
+  --ease: cubic-bezier(0.25,0.8,0.25,1);
+
+  /* 安全区 */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}

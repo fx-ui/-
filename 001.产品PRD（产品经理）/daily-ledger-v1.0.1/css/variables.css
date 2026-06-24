@@ -1,0 +1,62 @@
+/* === 粉嫩可爱配色体系 === */
+:root {
+  /* 主色调 */
+  --color-primary:       #FFB6C1;   /* 樱花粉 */
+  --color-primary-light: #FFD6E0;   /* 棉花糖粉 */
+  --color-primary-dark:  #FF9AAE;   /* 深樱花粉 */
+  --color-bg:            #FFF0F3;   /* 花瓣白 */
+  --color-surface:       #FFFFFF;   /* 卡片白 */
+
+  /* 功能色 */
+  --color-income:        #B8E6D0;   /* 薄荷绿 — 收入 */
+  --color-expense:       #FF8A80;   /* 珊瑚红 — 支出 */
+  --color-warning:       #FFD166;   /* 奶油黄 — 提醒 */
+  --color-accent:        #C599E8;   /* 薰衣草紫 — 点缀 */
+  --color-success:       #81C784;   /* 成功绿 */
+  --color-danger:        #FF8A80;   /* 危险红 */
+
+  /* 文字色 */
+  --color-text:          #2D2D2D;   /* 深灰 */
+  --color-text-secondary:#888888;   /* 灰色 */
+  --color-text-light:    #BBBBBB;   /* 浅灰 */
+
+  /* 圆角 */
+  --radius-sm:           8px;
+  --radius-md:           12px;
+  --radius-lg:           16px;
+  --radius-xl:           20px;
+  --radius-btn:          24px;
+  --radius-tag:          12px;
+  --radius-input:        12px;
+
+  /* 阴影 */
+  --shadow-card:         0 2px 12px rgba(255, 182, 193, 0.15);
+  --shadow-float:        0 4px 16px rgba(255, 182, 193, 0.25);
+  --shadow-modal:        0 8px 32px rgba(0, 0, 0, 0.08);
+
+  /* 间距 */
+  --space-xs:            4px;
+  --space-sm:            8px;
+  --space-md:            12px;
+  --space-lg:            16px;
+  --space-xl:            20px;
+  --space-2xl:           24px;
+  --space-3xl:           32px;
+
+  /* 字体 */
+  --font-family:         'Nunito', 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  --font-size-xs:        12px;
+  --font-size-sm:        13px;
+  --font-size-md:        15px;
+  --font-size-lg:        18px;
+  --font-size-xl:        24px;
+  --font-size-2xl:       32px;
+
+  /* 动画 */
+  --transition-fast:     150ms ease;
+  --transition-normal:   250ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-slow:     350ms cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* 底部安全区 */
+  --safe-area-bottom:    env(safe-area-inset-bottom, 0px);
+}

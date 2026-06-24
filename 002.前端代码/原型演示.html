@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#FFB6C1">
+<title>每日记账</title>
+<style>
+:root{--p:#FFB6C1;--pl:#FFD6E0;--pd:#FF9AAE;--bg:#FFF0F3;--s:#fff;--in:#B8E6D0;--ex:#FF8A80;--wa:#FFD166;--ac:#C599E8;--t:#2D2D2D;--ts:#888;--tl:#BBB;--r:12px;--sh:0 2px 12px rgba(255,182,193,.15);--f:'PingFang SC','Microsoft YaHei',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;background:var(--bg)}
+body{font-family:var(--f);font-size:15px;color:var(--t);line-height:1.5;background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;cursor:pointer;border:none;background:none;outline:none}
+input,textarea,select{font:inherit;font-size:16px;outline:none;border:none;background:none;-webkit-appearance:none;appearance:none}
+a{color:inherit;text-decoration:none}
+#app{width:100%;max-width:480px;min-height:100dvh;margin:0 auto;padding-bottom:72px;position:relative}
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:64px;background:var(--s);display:none;box-shadow:0 -2px 12px rgba(255,182,193,.12);z-index:100}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--tl);font-size:12px;transition:color .15s;user-select:none}
+.tab-item.on{color:var(--pd)}
+.tab-icon{font-size:22px}
+.card{background:var(--s);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:24px;font-size:15px;font-weight:600;transition:all .15s;min-height:44px;min-width:44px}
+.btn:active{transform:scale(.95)}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;box-shadow:0 4px 16px rgba(255,182,193,.25)}
+.btn-o{background:transparent;color:var(--pd);border:2px solid var(--p)}
+.btn-d{background:var(--ex);color:#fff}
+.btn-s{padding:8px 16px;font-size:13px;border-radius:8px}
+.btn-b{width:100%}
+.inp{width:100%;height:48px;padding:0 16px;background:var(--bg);border:2px solid transparent;border-radius:12px;font-size:16px;color:var(--t);transition:all .15s}
+.inp:focus{border-color:var(--p);background:var(--s)}
+.inp-big{font-size:32px;font-weight:700;text-align:center;height:64px;letter-spacing:2px}
+.ig{margin-bottom:12px}
+.il{display:block;font-size:13px;font-weight:600;color:var(--ts);margin-bottom:4px}
+.tog{display:flex;background:var(--bg);border-radius:24px;padding:4px;gap:4px}
+.tog-btn{flex:1;padding:8px;border-radius:20px;font-size:15px;font-weight:600;color:var(--ts);text-align:center;min-height:40px;transition:all .15s}
+.tog-btn.on{background:var(--s);color:var(--t);box-shadow:var(--sh)}
+.tog-btn.on.ex{color:var(--ex)}.tog-btn.on.in{color:var(--in)}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:8px 0;-webkit-overflow-scrolling:touch}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 16px;border-radius:16px;background:var(--s);box-shadow:var(--sh);min-width:64px;transition:all .15s;cursor:pointer}
+.cat:active{transform:scale(.93)}
+.cat.sel{background:var(--pl)}
+.cat-icon{font-size:24px}.cat-name{font-size:12px;font-weight:500;color:var(--ts);white-space:nowrap}
+.cat.sel .cat-name{color:var(--pd);font-weight:600}
+.bill-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--s);border-radius:var(--r);margin-bottom:8px;box-shadow:var(--sh)}
+.bill-icon{width:40px;height:40px;border-radius:50%;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.bill-info{flex:1;min-width:0}.bill-cat{font-weight:500}.bill-note{font-size:12px;color:var(--ts)}
+.bill-amt{font-size:18px;font-weight:700;text-align:right;flex-shrink:0}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-top:12px}
+.dh-date{font-weight:700}.dh-total{font-size:13px;color:var(--ts)}
+.sum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.sum-c{background:var(--s);border-radius:var(--r);padding:12px;text-align:center;box-shadow:var(--sh)}
+.sum-l{font-size:12px;color:var(--ts)}.sum-v{font-size:18px;font-weight:700}
+.sw{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px}
+.sw-l{font-size:18px;font-weight:700;min-width:100px;text-align:center}
+.sw-b{width:36px;height:36px;border-radius:50%;background:var(--pl);color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:16px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 0}
+.chip{flex-shrink:0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;background:var(--s);color:var(--ts);box-shadow:var(--sh)}
+.chip.on{background:var(--p);color:#fff}
+.menu{background:var(--s);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
+.menu-i{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--bg);min-height:52px}
+.menu-i:last-child{border-bottom:none}.menu-i:active{background:var(--bg)}
+.menu-l{display:flex;align-items:center;gap:12px}.menu-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.pb{height:12px;background:var(--bg);border-radius:6px;overflow:hidden;margin:8px 0}
+.pb-f{height:100%;border-radius:6px;transition:width .35s}
+.pb-f.sf{background:var(--in)}.pb-f.wn{background:var(--wa)}.pb-f.dg{background:var(--ex)}
+.empty{display:flex;flex-direction:column;align-items:center;padding:48px 24px;text-align:center}
+.empty-i{font-size:64px;margin-bottom:16px}.empty-t{font-weight:600;margin-bottom:8px}.empty-d{font-size:13px;color:var(--ts)}
+.toast-ct{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;max-width:480px;width:100%}
+.toast{padding:12px 24px;border-radius:24px;font-size:13px;font-weight:500;color:#fff;animation:bo .35s ease;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.toast-ok{background:#81C784}.toast-err{background:#E57373}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--s);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px;animation:su .3s ease}
+.modal-t{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.modal-act{display:flex;gap:12px;margin-top:20px}.modal-act .btn{flex:1}
+@keyframes bo{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.tc{text-align:center}.ts{color:var(--ts)}.tl{color:var(--tl)}.te{color:var(--ex)}.ti{color:var(--in)}.ta{color:var(--ac)}.fw{font-weight:700}.fs12{font-size:12px}.fs14{font-size:14px}.fs18{font-size:18px}.fs22{font-size:22px}.fs26{font-size:26px}
+.fx{display:flex}.fc{flex-direction:column}.aic{align-items:center}.jcc{justify-content:center}.jsb{justify-content:space-between}.f1{flex:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-ct" id="toasts"></div>
+<nav class="tab-bar" id="tabs"><div class="tab-item on" data-h="#record"><span class="tab-icon">📝</span>记账</div><div class="tab-item" data-h="#bills"><span class="tab-icon">📋</span>账单</div><div class="tab-item" data-h="#stats"><span class="tab-icon">📊</span>统计</div><div class="tab-item" data-h="#settings"><span class="tab-icon">👤</span>我的</div></nav>
+
+<script>
+// ===== 数据 =====
+const CATS = {
+  expense:[
+    {id:1,n:'三餐',i:'🍚'},{id:2,n:'零食',i:'🍿'},{id:3,n:'饮品',i:'🧋'},{id:4,n:'聚餐',i:'🍲'},
+    {id:5,n:'公交地铁',i:'🚇'},{id:6,n:'打车',i:'🚕'},{id:7,n:'加油',i:'⛽'},
+    {id:8,n:'服饰',i:'👗'},{id:9,n:'日用品',i:'🧴'},{id:10,n:'数码',i:'📱'},
+    {id:11,n:'房租',i:'🏠'},{id:12,n:'水电',i:'💡'},{id:13,n:'物业',i:'🏢'},
+    {id:14,n:'电影',i:'🎬'},{id:15,n:'游戏',i:'🎮'},{id:16,n:'旅游',i:'✈️'},
+    {id:17,n:'看病',i:'🏥'},{id:18,n:'买药',i:'💊'},{id:19,n:'书籍',i:'📚'},{id:20,n:'课程',i:'🎓'},
+    {id:21,n:'送礼',i:'🎁'},{id:22,n:'红包',i:'🧧'},{id:23,n:'其他',i:'🔸'}
+  ],
+  income:[
+    {id:24,n:'工资',i:'💰'},{id:25,n:'奖金',i:'🏆'},{id:26,n:'兼职',i:'💼'},
+    {id:27,n:'稿费',i:'✍️'},{id:28,n:'理财',i:'📈'},{id:29,n:'退款',i:'↩️'},{id:30,n:'其他',i:'🔹'}
+  ]
+};
+const ACCOUNTS = [{id:1,n:'现金',i:'💵',tp:'cash',bal:0},{id:2,n:'银行卡',i:'🏦',tp:'bank',bal:0},{id:3,n:'支付宝',i:'📱',tp:'ewallet',bal:0},{id:4,n:'微信',i:'💬',tp:'ewallet',bal:0}];
+let records = [
+  {id:1,amt:35.5,tp:'expense',cid:3,date:'2026-06-24',aid:3,note:'星巴克拿铁'},
+  {id:2,amt:28,tp:'expense',cid:1,date:'2026-06-24',aid:1,note:'午餐外卖'},
+  {id:3,amt:15,tp:'expense',cid:6,date:'2026-06-24',aid:3,note:'地铁通勤'},
+  {id:4,amt:120,tp:'expense',cid:9,date:'2026-06-23',aid:4,note:'超市采购'},
+  {id:5,amt:45,tp:'expense',cid:14,date:'2026-06-23',aid:3,note:'看电影'},
+  {id:6,amt:200,tp:'expense',cid:8,date:'2026-06-22',aid:2,note:'买T恤'},
+  {id:7,amt:1500,tp:'income',cid:24,date:'2026-06-15',aid:2,note:'6月工资'},
+  {id:8,amt:200,tp:'income',cid:26,date:'2026-06-20',aid:4,note:'周末兼职'},
+  {id:9,amt:68,tp:'expense',cid:4,date:'2026-06-21',aid:3,note:'朋友聚餐AA'},
+  {id:10,amt:300,tp:'expense',cid:11,date:'2026-06-01',aid:4,note:'房租'},
+];
+let accounts = ACCOUNTS.map(a=>({...a}));
+let budgets = [];
+let templates = [];
+
+// ===== 工具 =====
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+// 安全 DOM 操作：静默忽略空元素
+const safeStyle = (sel, prop, val) => { const el=$(sel); if(el) el.style[prop]=val; };
+const fm = n => '¥'+Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fd = d => { let dt=new Date(d),w=['日','一','二','三','四','五','六'][dt.getDay()]; return dt.getMonth()+1+'月'+dt.getDate()+'日 周'+w; };
+const fmn = m => { let [y,mo]=m.split('-'); return y+'年'+parseInt(mo)+'月'; };
+const today = () => { let d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const findCat = id => { for(let cs of Object.values(CATS)){ let f=cs.find(c=>c.id===id); if(f)return f; } return null; };
+
+// ===== Toast =====
+function toast(msg,ok){ let el=$('#toasts'); if(!el) return; let t=document.createElement('div'); t.className='toast toast-'+(ok?'ok':'err'); t.textContent=msg; el.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .2s';setTimeout(()=>t.remove(),200)},ok?1500:2500); }
+
+// ===== 认证 =====
+const AK = 'dl_user';
+function isLogin(){ return !!localStorage.getItem(AK); }
+function getLogin(){ return JSON.parse(localStorage.getItem(AK)||'null'); }
+function doLogin(u){ localStorage.setItem(AK,JSON.stringify({username:u})); }
+function doLogout(){ localStorage.removeItem(AK); }
+
+// ===== 路由 =====
+let curPage = '';
+let curType = 'expense';
+let curCat = null;
+let curMonth = today().slice(0,7);
+let curFilter = 'all';
+let curRange = 'month';
+let curSub = '';
+let pieC=null,trendC=null;
+
+function go(hash){
+  window.location.hash = hash;
+}
+
+function showTabs(show){
+  safeStyle('#tabs','display',show?'flex':'none');
+  if(show){
+    let h = window.location.hash;
+    $$('.tab-item').forEach(el=>{ el.classList.toggle('on', h.startsWith(el.dataset.h)&&!h.includes('/')); });
+  }
+}
+
+// ===== 页面渲染 =====
+function renderLogin(){
+  showTabs(false);
+  curPage='login';
+  $('#app').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:92dvh;padding:32px">
+      <div style="font-size:72px;margin-bottom:12px">🌸</div>
+      <div style="font-size:26px;font-weight:700;color:var(--pd);margin-bottom:4px">每日记账</div>
+      <div class="ts mb16" style="font-size:14px">粉嫩可爱 · 轻量记账</div>
+      <div class="card" style="width:100%;max-width:320px">
+        <div class="ig"><label class="il">👤 用户名</label><input type="text" id="lg-user" class="inp" placeholder="请输入用户名" maxlength="20"></div>
+        <div class="ig"><label class="il">🔒 密码</label><input type="password" id="lg-pass" class="inp" placeholder="至少 3 位" maxlength="50"></div>
+        <div id="lg-err" class="tc te fs12" style="min-height:20px;margin-bottom:8px"></div>
+        <button class="btn btn-p btn-b" style="height:48px;font-size:16px" onclick="submitLogin()">🌸 登录</button>
+      </div>
+      <div class="tc mt16" style="font-size:14px"><span class="ts">还没有账号？</span> <a href="#register" style="color:var(--ac);font-weight:600">立即注册</a></div>
+    </div>`;
+}
+
+function submitLogin(){
+  let u = $('#lg-user')?.value?.trim();
+  let p = $('#lg-pass')?.value?.trim();
+  let err = $('#lg-err');
+  if(!u){ err.textContent='请输入用户名'; return; }
+  if(!p||p.length<3){ err.textContent='密码至少 3 位'; return; }
+  err.textContent = '';
+  doLogin(u);
+  $('#app').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:92dvh">
+      <div style="font-size:72px;animation:bo .5s ease">🌸</div>
+      <div style="font-size:22px;font-weight:700;color:var(--pd);margin-top:16px">欢迎回来，${u}</div>
+      <div class="ts mt8" style="font-size:14px">正在进入记账本...</div>
+    </div>`;
+  showTabs(true);
+  setTimeout(()=>{ go('#record'); }, 800);
+}
+
+function renderRegister(){
+  showTabs(false);
+  curPage='register';
+  $('#app').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:92dvh;padding:32px">
+      <div style="font-size:56px;margin-bottom:12px">🌟</div>
+      <div style="font-size:24px;font-weight:700;color:var(--pd);margin-bottom:4px">创建账号</div>
+      <div class="ts mb16" style="font-size:14px">开始你的记账之旅吧～</div>
+      <div class="card" style="width:100%;max-width:320px">
+        <div class="ig"><label class="il">👤 用户名</label><input type="text" id="rg-user" class="inp" placeholder="2-20个字符" maxlength="20"></div>
+        <div class="ig"><label class="il">🔒 密码</label><input type="password" id="rg-pass" class="inp" placeholder="至少 3 位" maxlength="50"></div>
+        <div class="ig"><label class="il">🔒 确认密码</label><input type="password" id="rg-pass2" class="inp" placeholder="再次输入" maxlength="50"></div>
+        <div id="rg-err" class="tc te fs12" style="min-height:20px;margin-bottom:8px"></div>
+        <button class="btn btn-p btn-b" style="height:48px;font-size:16px" onclick="submitRegister()">🌟 注册</button>
+      </div>
+      <div class="tc mt16" style="font-size:14px"><span class="ts">已有账号？</span> <a href="#login" style="color:var(--ac);font-weight:600">立即登录</a></div>
+    </div>`;
+}
+
+function submitRegister(){
+  let u = $('#rg-user')?.value?.trim();
+  let p = $('#rg-pass')?.value?.trim();
+  let p2 = $('#rg-pass2')?.value?.trim();
+  let err = $('#rg-err');
+  if(!u||u.length<2){ err.textContent='用户名至少 2 个字符'; return; }
+  if(!p||p.length<3){ err.textContent='密码至少 3 位'; return; }
+  if(p!==p2){ err.textContent='两次密码不一致'; return; }
+  err.textContent = '';
+  doLogin(u);
+  $('#app').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:92dvh">
+      <div style="font-size:72px;animation:bo .5s ease">🌟</div>
+      <div style="font-size:22px;font-weight:700;color:var(--pd);margin-top:16px">欢迎加入，${u}</div>
+      <div class="ts mt8" style="font-size:14px">马上开始第一笔记账吧～</div>
+    </div>`;
+  showTabs(true);
+  setTimeout(()=>{ go('#record'); }, 800);
+}
+
+function renderRecord(){
+  showTabs(true);
+  curPage='record';
+  let cats = CATS[curType];
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="tog mb16">
+        <button class="tog-btn ex ${curType==='expense'?'on':''}" onclick="switchType('expense')">🔴 支出</button>
+        <button class="tog-btn in ${curType==='income'?'on':''}" onclick="switchType('income')">🟢 收入</button>
+      </div>
+      <div class="card mb16" style="text-align:center">
+        <div class="ts fs12 mb8">${curType==='expense'?'💸 花了多少？':'💰 收入多少？'}</div>
+        <input type="text" inputmode="decimal" id="rec-amt" class="inp inp-big" placeholder="0.00" maxlength="12" autocomplete="off">
+      </div>
+      <div class="card mb16"><div class="fw mb12">选择分类</div>
+        <div class="cats" id="cat-list">${cats.map(c=>`<div class="cat${curCat&&curCat.id===c.id?' sel':''}" onclick="pickCat(${c.id})"><span class="cat-icon">${c.i}</span><span class="cat-name">${c.n}</span></div>`).join('')}</div>
+      </div>
+      <div class="card mb16">
+        <div class="ig"><label class="il">📅 日期</label><input type="date" id="rec-date" class="inp" value="${today()}"></div>
+        <div class="ig"><label class="il">🏦 账户</label><select id="rec-acc" class="inp">${accounts.map(a=>`<option value="${a.id}">${a.i} ${a.n}</option>`).join('')}</select></div>
+        <div class="ig"><label class="il">📝 备注</label><textarea id="rec-note" class="inp" style="min-height:72px;padding:12px 16px;resize:none" placeholder="写点备注吧～" maxlength="200"></textarea></div>
+      </div>
+      <button class="btn btn-p btn-b" style="height:52px;font-size:18px" onclick="saveRecord()">✅ 记录这笔</button>
+      <div style="height:24px"></div>
+    </div>`;
+  setTimeout(()=>$('#rec-amt')?.focus(), 200);
+}
+
+function switchType(t){
+  curType = t; curCat = null; renderRecord();
+}
+
+function pickCat(id){
+  curCat = CATS[curType].find(c=>c.id===id);
+  $$('.cat').forEach(el=>el.classList.toggle('sel', parseInt(el.querySelector('.cat-name').parentElement.getAttribute('onclick')?.match(/\d+/)?.[0])===id));
+  // 更简单的方式：重新渲染
+  renderRecord();
+}
+
+function saveRecord(){
+  let amt = parseFloat($('#rec-amt')?.value);
+  let date = $('#rec-date')?.value;
+  let note = $('#rec-note')?.value?.trim();
+  let aid = parseInt($('#rec-acc')?.value);
+  if(isNaN(amt)||amt<=0){ toast('请输入有效金额',false); return; }
+  if(!curCat){ toast('请选择分类',false); return; }
+  records.unshift({id:Date.now(),amt,tp:curType,cid:curCat.id,date,aid,note});
+  let acc = accounts.find(a=>a.id===aid);
+  if(acc) acc.bal += curType==='income'?amt:-amt;
+  toast(`记好啦～ ${curType==='expense'?'💸':'💰'} ¥${amt.toFixed(2)}`,true);
+  curCat=null;
+  renderRecord();
+}
+
+function renderBills(){
+  showTabs(true);
+  curPage='bills';
+  let list = records.filter(r=>r.date.startsWith(curMonth));
+  if(curFilter!=='all') list = list.filter(r=>r.tp===curFilter);
+  let totalOut = list.filter(r=>r.tp==='expense').reduce((s,r)=>s+r.amt,0);
+  let totalIn = list.filter(r=>r.tp==='income').reduce((s,r)=>s+r.amt,0);
+  let groups = {};
+  list.forEach(r=>{ if(!groups[r.date]) groups[r.date]=[]; groups[r.date].push(r); });
+  let dates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="sw"><button class="sw-b" onclick="chgMonth(-1)">◀</button><span class="sw-l">${fmn(curMonth)}</span><button class="sw-b" onclick="chgMonth(1)">▶</button></div>
+      <div class="sum"><div class="sum-c"><div class="sum-l">💸 支出</div><div class="sum-v te">${fm(totalOut)}</div></div><div class="sum-c"><div class="sum-l">💰 收入</div><div class="sum-v ti">${fm(totalIn)}</div></div><div class="sum-c"><div class="sum-l">💜 结余</div><div class="sum-v ta">${fm(totalIn-totalOut)}</div></div></div>
+      <div class="chips mb16">
+        <button class="chip ${curFilter==='all'?'on':''}" onclick="setFilter('all')">全部</button>
+        <button class="chip ${curFilter==='expense'?'on':''}" onclick="setFilter('expense')">💸 支出</button>
+        <button class="chip ${curFilter==='income'?'on':''}" onclick="setFilter('income')">💰 收入</button>
+      </div>
+      ${list.length===0?`<div class="empty"><div class="empty-i">📋</div><div class="empty-t">还没有账单</div><div class="empty-d">去记账页开始记录吧～</div></div>`:dates.map(d=>`
+        <div class="dh"><span class="dh-date">${fd(d)}</span><span class="dh-total">${groups[d].filter(r=>r.tp==='expense').length?'支出 '+fm(groups[d].filter(r=>r.tp==='expense').reduce((s,r)=>s+r.amt,0)):''} ${groups[d].filter(r=>r.tp==='income').length?'收入 '+fm(groups[d].filter(r=>r.tp==='income').reduce((s,r)=>s+r.amt,0)):''}</span></div>
+        ${groups[d].map(r=>{let c=findCat(r.cid);return`<div class="bill-row"><div class="bill-icon">${c?.i||'📌'}</div><div class="bill-info"><div class="bill-cat">${c?.n||'未知'}</div>${r.note?`<div class="bill-note">${r.note}</div>`:''}</div><div class="bill-amt ${r.tp==='expense'?'te':'ti'}">${r.tp==='expense'?'-':'+'}${fm(r.amt).replace('¥','')}</div></div>`;}).join('')}
+      `).join('')}
+    </div>`;
+}
+
+function chgMonth(d){ let [y,m]=curMonth.split('-').map(Number); let dt=new Date(y,m-1+d,1); curMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); renderBills(); }
+function setFilter(f){ curFilter=f; renderBills(); }
+
+function renderStats(){
+  showTabs(true);
+  curPage='stats';
+  let now=new Date(),start,mons;
+  if(curRange==='3m'){start=new Date(now.getFullYear(),now.getMonth()-2,1);mons=3}
+  else if(curRange==='6m'){start=new Date(now.getFullYear(),now.getMonth()-5,1);mons=6}
+  else if(curRange==='12m'){start=new Date(now.getFullYear()-1,now.getMonth(),1);mons=12}
+  else {start=new Date(now.getFullYear(),now.getMonth(),1);mons=3}
+  let ss=start.toISOString().slice(0,10),es=now.toISOString().slice(0,10);
+  let fl=records.filter(r=>r.date>=ss&&r.date<=es);
+  let to=fl.filter(r=>r.tp==='expense').reduce((s,r)=>s+r.amt,0);
+  let ti_=fl.filter(r=>r.tp==='income').reduce((s,r)=>s+r.amt,0);
+  let cm={}; fl.filter(r=>r.tp==='expense').forEach(r=>{cm[r.cid]=(cm[r.cid]||0)+r.amt});
+  let cs=Object.entries(cm).sort((a,b)=>b[1]-a[1]);
+  let ms=[];
+  for(let i=mons-1;i>=0;i--){let d=new Date(start.getFullYear(),start.getMonth()+i,1);let m_=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');let mr=records.filter(r=>r.date.startsWith(m_));ms.push({m:m_,in:mr.filter(r=>r.tp==='income').reduce((s,r)=>s+r.amt,0),ex:mr.filter(r=>r.tp==='expense').reduce((s,r)=>s+r.amt,0)});}
+
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fw fs22 mb16">📊 统计分析</div>
+      <div class="chips mb16">
+        <button class="chip ${curRange==='month'?'on':''}" onclick="setRange('month')">本月</button>
+        <button class="chip ${curRange==='3m'?'on':''}" onclick="setRange('3m')">近3月</button>
+        <button class="chip ${curRange==='6m'?'on':''}" onclick="setRange('6m')">近6月</button>
+        <button class="chip ${curRange==='12m'?'on':''}" onclick="setRange('12m')">近1年</button>
+      </div>
+      ${fl.length===0?`<div class="empty"><div class="empty-i">📊</div><div class="empty-t">暂无数据</div></div>`:`
+        <div class="sum"><div class="sum-c"><div class="sum-l">💸 支出</div><div class="sum-v te">${fm(to)}</div></div><div class="sum-c"><div class="sum-l">💰 收入</div><div class="sum-v ti">${fm(ti_)}</div></div><div class="sum-c"><div class="sum-l">💜 结余</div><div class="sum-v ta">${fm(ti_-to)}</div></div></div>
+        <div class="card mb16"><div class="fw mb12">支出分类分布</div><div style="max-width:280px;margin:0 auto"><canvas id="pie-c"></canvas></div></div>
+        <div class="card mb16"><div class="fw mb12">收支趋势</div><div style="height:240px"><canvas id="trend-c"></canvas></div></div>
+        <div class="card"><div class="fw mb12">支出排行 TOP5</div>
+          ${cs.slice(0,5).map(([cid,amt],i)=>{let c=findCat(parseInt(cid));return`<div class="fx aic jsb mb8" style="padding:8px 0;border-bottom:1px solid var(--bg)"><span>${['🥇','🥈','🥉','④','⑤'][i]} ${c?.i||'📌'} ${c?.n||'未知'}</span><span class="fw te">${fm(amt)} <span class="fs12 ts">${to?((amt/to)*100).toFixed(1):0}%</span></span></div>`;}).join('')}
+        </div>
+      `}
+      <div style="height:24px"></div>
+    </div>`;
+  if(fl.length>0) setTimeout(()=>{drawPie(cs,to);drawTrend(ms);},200);
+}
+
+function setRange(r){ curRange=r; if(pieC){pieC.destroy();pieC=null;} if(trendC){trendC.destroy();trendC=null;} renderStats(); }
+
+function drawPie(cs,to){
+  let ctx=$('#pie-c'); if(!ctx||!window.Chart) return;
+  let clrs=['#FFB6C1','#FF8A80','#FFD166','#B8E6D0','#C599E8','#FFAB91','#90CAF9','#F48FB1'];
+  pieC=new Chart(ctx,{type:'doughnut',data:{labels:cs.slice(0,8).map(([id])=>findCat(parseInt(id))?.n||'未知'),datasets:[{data:cs.slice(0,8).map(([,a])=>a),backgroundColor:clrs,borderColor:'#fff',borderWidth:3}]},options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{padding:12,usePointStyle:true,pointStyleWidth:8,font:{size:11}}}}}});
+}
+
+function drawTrend(ms){
+  let ctx=$('#trend-c'); if(!ctx||!window.Chart) return;
+  trendC=new Chart(ctx,{type:'bar',data:{labels:ms.map(s=>fmn(s.m)),datasets:[{label:'支出',data:ms.map(s=>s.ex),backgroundColor:'rgba(255,138,128,0.7)',borderRadius:6},{label:'收入',data:ms.map(s=>s.in),backgroundColor:'rgba(184,230,208,0.7)',borderRadius:6},{label:'结余',data:ms.map(s=>s.in-s.ex),type:'line',borderColor:'#C599E8',borderWidth:2.5,pointRadius:5,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:16,font:{size:11}}}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+}
+
+function renderSettings(){
+  showTabs(true);
+  curPage='settings';
+  let user=getLogin();
+  let ta=accounts.reduce((s,a)=>s+(a.bal||0),0);
+  let rc=records.length;
+
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fw fs22 mb16">👤 我的</div>
+      <div class="card mb16" style="background:linear-gradient(135deg,var(--pl),var(--bg));text-align:center">
+        <div style="font-size:48px">🌸</div>
+        <div class="fw fs18" style="color:var(--pd)">${user?user.username:'每日记账'}</div>
+        <div class="ts fs12 mt8">已记 ${rc} 笔 · 资产 ${fm(ta)}</div>
+        <button class="btn btn-s btn-o mt16" style="color:var(--ex);border-color:var(--ex)" onclick="handleLogout()">🚪 退出登录</button>
+      </div>
+      <div class="menu">
+        ${[{icon:'🏦',bg:'#FFD6E0',label:'账户管理',h:'#settings/accounts',info:accounts.length+'个账户'},{icon:'🎯',bg:'#FFD166',label:'预算设置',h:'#settings/budget',info:budgets.length+'项预算'},{icon:'📂',bg:'#B8E6D0',label:'分类管理',h:'#settings/categories',info:'支出'+CATS.expense.length+'项'},{icon:'⚡',bg:'#C599E8',label:'记账模板',h:'#settings/templates',info:templates.length+'个模板'},{icon:'📤',bg:'#FFB6C1',label:'数据管理',h:'#settings/export',info:'导出/导入'}].map(m=>`
+          <a href="${m.h}" class="menu-i"><div class="menu-l"><div class="menu-icon" style="background:${m.bg}">${m.icon}</div><span>${m.label}</span></div><span class="tl fs12">${m.info} ›</span></a>
+        `).join('')}
+      </div>
+      <div class="card tc ts fs12">🌸 每日记账 V1.0<br>粉嫩可爱 · 原型演示</div>
+    </div>`;
+}
+
+function handleLogout(){
+  if(confirm('确定要退出登录吗？\n本地记账数据不会丢失')){
+    doLogout();
+    showTabs(false);
+    go('#login');
+    toast('已退出登录',true);
+  }
+}
+
+function renderSubAccounts(){
+  showTabs(true);
+  curPage='sub';
+  let ta=accounts.reduce((s,a)=>s+(a.bal||0),0);
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fx aic jsb mb16"><button class="sw-b" onclick="go('#settings')">←</button><span class="fw fs22">🏦 账户管理</span><button class="btn btn-s btn-p" onclick="addAccount()">+ 添加</button></div>
+      <div class="card mb16" style="text-align:center;background:linear-gradient(135deg,var(--pl),var(--bg))"><div class="ts fs12">💰 总资产</div><div class="fw" style="font-size:28px;color:var(--ac)">${fm(ta)}</div></div>
+      ${accounts.map(a=>`<div class="card mb8 fx aic" style="gap:12px"><div style="width:44px;height:44px;border-radius:50%;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:22px">${a.i}</div><div class="f1"><div class="fw">${a.n}</div><div class="ts fs12">${a.tp}</div></div><div class="fw fs18" style="color:${a.bal>=0?'var(--in)':'var(--ex)'}">${fm(a.bal)}</div></div>`).join('')}
+    </div>`;
+}
+
+function addAccount(){
+  let n=prompt('账户名称（如：工资卡）：');
+  if(n){ accounts.push({id:Date.now(),n,i:'🏦',tp:'bank',bal:0}); toast('已添加',true); renderSubAccounts(); }
+}
+
+function renderSubBudget(){
+  showTabs(true); curPage='sub';
+  let tb=budgets.find(b=>b.cid===null);
+  let ts_=records.filter(r=>r.tp==='expense').reduce((s,r)=>s+r.amt,0);
+  let pct=tb?Math.min((ts_/tb.amt)*100,100):0;
+  let st=pct<60?'sf':pct<80?'wn':'dg';
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fx aic jsb mb16"><button class="sw-b" onclick="go('#settings')">←</button><span class="fw fs22">🎯 预算设置</span><button class="btn btn-s btn-p" onclick="setBudget()">设置</button></div>
+      <div class="card mb16"><div class="fw mb12">📊 月度总预算</div>
+        ${tb?`<div class="ts fs12 mb8">预算 ${fm(tb.amt)} · 已花 ${fm(ts_)}</div><div class="pb"><div class="pb-f ${st}" style="width:${pct}%"></div></div><div class="fx jsb fs12 mt8"><span class="${st==='sf'?'ti':'te'}">${['安全','注意','警告'][['sf','wn','dg'].indexOf(st)]}</span><span class="ts">${pct.toFixed(0)}%</span></div>`:'<div class="tc ts" style="padding:20px">还没有设置预算</div>'}
+      </div>
+    </div>`;
+}
+
+function setBudget(){
+  let amt=parseFloat(prompt('设置月度预算金额：','5000'));
+  if(!isNaN(amt)&&amt>0){ budgets=[{id:1,cid:null,amt}]; toast('预算已保存',true); renderSubBudget(); }
+}
+
+function renderSubCategories(){
+  showTabs(true); curPage='sub';
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fx aic jsb mb16"><button class="sw-b" onclick="go('#settings')">←</button><span class="fw fs22">📂 分类管理</span></div>
+      <div class="card mb16"><div class="fw mb12">💸 支出分类 (${CATS.expense.length})</div>${CATS.expense.map(c=>`<div class="fx jsb mb8" style="padding:8px 0;border-bottom:1px solid var(--bg)"><span>${c.i} ${c.n}</span><span class="tl fs12">预置</span></div>`).join('')}</div>
+      <div class="card"><div class="fw mb12">💰 收入分类 (${CATS.income.length})</div>${CATS.income.map(c=>`<div class="fx jsb mb8" style="padding:8px 0;border-bottom:1px solid var(--bg)"><span>${c.i} ${c.n}</span><span class="tl fs12">预置</span></div>`).join('')}</div>
+    </div>`;
+}
+
+function renderSubTemplates(){
+  showTabs(true); curPage='sub';
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fx aic jsb mb16"><button class="sw-b" onclick="go('#settings')">←</button><span class="fw fs22">⚡ 模板管理</span></div>
+      ${templates.length===0?`<div class="empty"><div class="empty-i">⚡</div><div class="empty-t">还没有模板</div><button class="btn btn-p mt16" onclick="addTemplate()">创建模板</button></div>`:templates.map(t=>`<div class="card mb8"><div class="fx jsb mb8"><span class="fw">${t.n}</span><span class="fw te">${fm(t.amt)}</span></div><div class="fx" style="gap:8px"><button class="btn btn-s btn-p" onclick="useTemplate(${t.id})">⚡ 使用</button><button class="btn btn-s btn-d" onclick="delTemplate(${t.id})">删除</button></div></div>`).join('')}
+      <button class="btn btn-o btn-b mt16" onclick="addTemplate()">+ 新建模板</button>
+    </div>`;
+}
+
+function addTemplate(){
+  let n=prompt('模板名称（如：早晨咖啡）：');
+  if(n){let amt=parseFloat(prompt('金额：')); if(!isNaN(amt)&&amt>0){templates.push({id:Date.now(),n,amt,tp:'expense',cid:3});toast('模板已创建',true);renderSubTemplates();}}
+}
+
+function delTemplate(id){ templates=templates.filter(t=>t.id!==id); toast('已删除',true); renderSubTemplates(); }
+function useTemplate(id){ let t=templates.find(x=>x.id===id); if(t){curType=t.tp;curCat=CATS[t.tp].find(c=>c.id===t.cid);go('#record');} }
+
+function renderSubExport(){
+  showTabs(true); curPage='sub';
+  $('#app').innerHTML = `
+    <div style="padding:16px">
+      <div class="fx aic jsb mb16"><button class="sw-b" onclick="go('#settings')">←</button><span class="fw fs22">📤 数据管理</span></div>
+      <div class="card mb16"><div class="fw mb12">📊 数据概览</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="tc"><div style="font-size:24px;font-weight:700;color:var(--pd)">${records.length}</div><div class="ts fs12">条记录</div></div><div class="tc"><div style="font-size:24px;font-weight:700;color:var(--ac)">${accounts.length}</div><div class="ts fs12">个账户</div></div></div></div>
+      <button class="btn btn-p btn-b mb8" onclick="exportJSON()">📥 导出 JSON</button>
+      <button class="btn btn-d btn-b" onclick="resetData()">🗑 重置示例数据</button>
+    </div>`;
+}
+
+function exportJSON(){
+  let data=JSON.stringify({records,accounts,budgets,templates},null,2);
+  let b=new Blob([data],{type:'application/json'});
+  let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='daily-ledger-backup.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('导出成功',true);
+}
+
+function resetData(){
+  if(confirm('确定要重置所有数据吗？')){
+    records=[{id:1,amt:35.5,tp:'expense',cid:3,date:'2026-06-24',aid:3,note:'星巴克拿铁'},{id:2,amt:28,tp:'expense',cid:1,date:'2026-06-24',aid:1,note:'午餐外卖'},{id:3,amt:1500,tp:'income',cid:24,date:'2026-06-15',aid:2,note:'6月工资'}];
+    accounts=ACCOUNTS.map(a=>({...a})); budgets=[]; templates=[];
+    toast('已重置',true); go('#settings');
+  }
+}
+
+// ===== 路由调度 =====
+function route(){
+  let h = window.location.hash || '';
+  // 登录守卫
+  if(!isLogin() && h!=='#login' && h!=='#register'){
+    go('#login'); return;
+  }
+  if(isLogin() && (h==='#login'||h==='#register')){
+    go('#record'); return;
+  }
+  // 未登录 → 只允许 login/register
+  if(!isLogin()){
+    if(h==='#login') renderLogin();
+    else if(h==='#register') renderRegister();
+    else go('#login');
+    return;
+  }
+  // 已登录 → 正常路由
+  if(h==='#record') renderRecord();
+  else if(h==='#bills') renderBills();
+  else if(h==='#stats') renderStats();
+  else if(h==='#settings') renderSettings();
+  else if(h==='#settings/accounts') renderSubAccounts();
+  else if(h==='#settings/budget') renderSubBudget();
+  else if(h==='#settings/categories') renderSubCategories();
+  else if(h==='#settings/templates') renderSubTemplates();
+  else if(h==='#settings/export') renderSubExport();
+  else if(!h||h==='#/'||h==='#') go('#record');
+  else go('#record');
+  // 更新 TabBar 高亮
+  $$('.tab-item').forEach(el=>{el.classList.toggle('on',h.startsWith(el.dataset.h)&&!h.includes('/'));});
+}
+
+// ===== TabBar 点击 =====
+$$('.tab-item').forEach(el=>{el.addEventListener('click',()=>go(el.dataset.h));});
+
+// ===== 启动 =====
+window.addEventListener('hashchange', route);
+window.addEventListener('DOMContentLoaded', ()=>{
+  // 根据登录状态修正初始 hash
+  if(!isLogin()){
+    // 未登录：只允许 login / register
+    if(location.hash !== '#login' && !location.hash.startsWith('#register')){
+      location.hash = '#login';
+    }
+  } else {
+    // 已登录：禁止停留在 login / register
+    if(!location.hash || location.hash==='#/' || location.hash==='#login' || location.hash==='#register'){
+      location.hash = '#record';
+    }
+  }
+  // 始终调用 route()，确保页面渲染（避免同值 hash 不触发 hashchange）
+  route();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+</body>
+</html>

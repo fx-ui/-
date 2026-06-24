@@ -1,0 +1,5 @@
+# 依赖
+node_modules/
+
+# Claude 本地配置
+.claude/
