@@ -61,12 +61,19 @@ app.use((err, req, res, next) => {
 });
 
 // ================================================================
-//  静态文件（前端页面）
+//  静态文件（仅暴露前端资源，禁止访问 backend 目录）
 // ================================================================
-app.use(express.static(path.join(__dirname, '..')));
+app.use('/css',  express.static(path.join(__dirname, '..', 'css')));
+app.use('/js',   express.static(path.join(__dirname, '..', 'js')));
+app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
 
-// SPA fallback
-app.use((req, res, next) => {
+// 禁止访问 backend 目录
+app.use('/backend', (req, res) => {
+  res.status(403).json({ code: 403, message: '禁止访问' });
+});
+
+// SPA fallback — index.html 处理所有其他非 API 请求
+app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });

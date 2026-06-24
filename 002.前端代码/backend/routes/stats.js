@@ -21,7 +21,7 @@ router.get('/monthly-summary', async (req, res) => {
         COALESCE(SUM(CASE WHEN type='income'  THEN amount ELSE 0 END), 0) AS total_income,
         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS total_expense
       FROM records
-      WHERE user_id = ? AND is_deleted = 0
+      WHERE user_id = ?
         AND DATE_FORMAT(record_date, '%Y-%m') = ?
     `, [userId, month]);
 
@@ -60,7 +60,7 @@ router.get('/category-ranking', async (req, res) => {
       SELECT c.id, c.name, c.icon, SUM(r.amount) AS total
       FROM records r
       JOIN categories c ON r.category_id = c.id
-      WHERE r.user_id = ? AND r.is_deleted = 0 AND r.type = 'expense'
+      WHERE r.user_id = ? AND r.type = 'expense'
         AND DATE_FORMAT(r.record_date, '%Y-%m') = ?
       GROUP BY c.id, c.name, c.icon
       ORDER BY total DESC
@@ -91,7 +91,7 @@ router.get('/yearly-summary', async (req, res) => {
         COALESCE(SUM(CASE WHEN type='income'  THEN amount ELSE 0 END), 0) AS total_income,
         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS total_expense
       FROM records
-      WHERE user_id = ? AND is_deleted = 0
+      WHERE user_id = ?
         AND YEAR(record_date) = ?
     `, [userId, year]);
 
@@ -130,7 +130,7 @@ router.get('/category-breakdown', async (req, res) => {
       SELECT c.id, c.name, c.icon, SUM(r.amount) AS total
       FROM records r
       JOIN categories c ON r.category_id = c.id
-      WHERE r.user_id = ? AND r.is_deleted = 0 AND r.type = ?
+      WHERE r.user_id = ? AND r.type = ?
         AND YEAR(r.record_date) = ?
       GROUP BY c.id, c.name, c.icon
       ORDER BY total DESC
@@ -161,7 +161,7 @@ router.get('/monthly-trend', async (req, res) => {
         COALESCE(SUM(CASE WHEN type='income'  THEN amount ELSE 0 END), 0) AS income,
         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense
       FROM records
-      WHERE user_id = ? AND is_deleted = 0
+      WHERE user_id = ?
         AND YEAR(record_date) = ?
       GROUP BY MONTH(record_date)
       ORDER BY m
@@ -202,7 +202,7 @@ router.get('/export', async (req, res) => {
       SELECT
         COALESCE(SUM(CASE WHEN type='income'  THEN amount ELSE 0 END), 0) AS income,
         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense
-      FROM records WHERE user_id = ? AND is_deleted = 0 AND YEAR(record_date) = ?
+      FROM records WHERE user_id = ? AND YEAR(record_date) = ?
     `, [userId, year]);
 
     // 分类统计
@@ -210,7 +210,7 @@ router.get('/export', async (req, res) => {
       SELECT c.name AS category, r.type,
         SUM(r.amount) AS total, COUNT(*) AS count
       FROM records r JOIN categories c ON r.category_id = c.id
-      WHERE r.user_id = ? AND r.is_deleted = 0 AND YEAR(r.record_date) = ?
+      WHERE r.user_id = ? AND YEAR(r.record_date) = ?
       GROUP BY c.name, r.type ORDER BY total DESC
     `, [userId, year]);
 
@@ -219,7 +219,7 @@ router.get('/export', async (req, res) => {
       SELECT MONTH(record_date) AS month,
         COALESCE(SUM(CASE WHEN type='income'  THEN amount ELSE 0 END), 0) AS income,
         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense
-      FROM records WHERE user_id = ? AND is_deleted = 0 AND YEAR(record_date) = ?
+      FROM records WHERE user_id = ? AND YEAR(record_date) = ?
       GROUP BY MONTH(record_date) ORDER BY month
     `, [userId, year]);
 

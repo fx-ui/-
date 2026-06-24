@@ -24,13 +24,6 @@ export class CategoryPicker {
     const picker = this.el.querySelector('.category-picker');
     if (!picker) return;
 
-    // 跟踪触摸位移，区分"点击"和"滑动"
-    let startX = 0, startY = 0;
-    picker.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    }, { passive: true });
-
     // 只响应 click（移动端 tap），不阻止滑动
     picker.addEventListener('click', (e) => {
       const chip = e.target.closest('.category-chip');

@@ -1,5 +1,4 @@
 // 统计页 — 年份选择 + 全年统计 + 饼图 + 趋势折线图 + Excel 导出
-import { store } from '../store.js';
 import { fmtMoney } from '../utils/format.js';
 import {
   getYearlySummary, getCategoryBreakdown, getMonthlyTrend, downloadExcel,
