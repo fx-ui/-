@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
     const offset    = parseInt(req.query.offset) || 0;
 
     // WHERE 条件
-    let where = 'WHERE r.user_id = ? AND r.is_deleted = 0';
+    let where = 'WHERE r.user_id = ?';
     const params = [userId];
 
     if (month) {
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
 });
 
 // ================================================================
-//  DELETE /api/records/:id — 软删除一条记录
+//  DELETE /api/records/:id — 硬删除一条记录
 // ================================================================
 router.delete('/:id', async (req, res) => {
   const conn = await pool.getConnection();
@@ -121,7 +121,7 @@ router.delete('/:id', async (req, res) => {
 
     // 查出记录信息，用于回滚账户余额
     const [rows] = await conn.query(
-      'SELECT type, amount, account_id FROM records WHERE id = ? AND user_id = ? AND is_deleted = 0',
+      'SELECT type, amount, account_id FROM records WHERE id = ? AND user_id = ?',
       [id, userId]
     );
     if (rows.length === 0) {
@@ -130,10 +130,8 @@ router.delete('/:id', async (req, res) => {
 
     const rec = rows[0];
 
-    await conn.query(
-      'UPDATE records SET is_deleted = 1 WHERE id = ? AND user_id = ?',
-      [id, userId]
-    );
+    // 硬删除
+    await conn.query('DELETE FROM records WHERE id = ? AND user_id = ?', [id, userId]);
 
     // 回滚账户余额
     if (rec.account_id) {
