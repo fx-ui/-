@@ -96,3 +96,86 @@ export function login(username, password) {
 export function getProfile() {
   return request('/auth/me');
 }
+
+// ================================================================
+//  分类 API
+// ================================================================
+
+/** 获取分类列表（从数据库） */
+export function fetchCategories(type = 'expense') {
+  return request('/categories?type=' + type);
+}
+
+// ================================================================
+//  账单记录 API
+// ================================================================
+
+/** 创建记录 */
+export function createRecord(data) {
+  return request('/records', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/** 查询记录列表 */
+export function getRecords(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return request('/records' + (qs ? '?' + qs : ''));
+}
+
+/** 删除记录 */
+export function deleteRecord(id) {
+  return request('/records/' + id, { method: 'DELETE' });
+}
+
+// ================================================================
+//  统计 API
+// ================================================================
+
+/** 月度收支总览 */
+export function getMonthlySummary(month) {
+  return request('/stats/monthly-summary?month=' + encodeURIComponent(month));
+}
+
+/** 分类支出排名 */
+export function getCategoryRanking(month, limit = 3) {
+  return request(`/stats/category-ranking?month=${encodeURIComponent(month)}&limit=${limit}`);
+}
+
+/** 年度收支总览 */
+export function getYearlySummary(year) {
+  return request('/stats/yearly-summary?year=' + year);
+}
+
+/** 分类统计（饼图） */
+export function getCategoryBreakdown(year, type = 'expense') {
+  return request(`/stats/category-breakdown?year=${year}&type=${type}`);
+}
+
+/** 月度趋势（折线图） */
+export function getMonthlyTrend(year) {
+  return request('/stats/monthly-trend?year=' + year);
+}
+
+/** 导出 CSV（前端直接生成下载） */
+export function downloadCSV(year, summary, breakdown, trend) {
+  let csv = '﻿'; // BOM for Excel UTF-8
+  csv += `${year}年 每日记账统计报告\n\n`;
+  csv += `年度总览\n全年收入,全年支出,全年结余\n`;
+  csv += `${summary.income},${summary.expense},${summary.balance}\n\n`;
+  csv += `支出分类统计\n分类,金额\n`;
+  breakdown.forEach(c => csv += `${c.name},${c.total}\n`);
+  csv += `\n月度趋势\n月份,收入,支出,结余\n`;
+  (trend || []).forEach(t => csv += `${t.month}月,${t.income},${t.expense},${(t.income - t.expense).toFixed(2)}\n`);
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `daily-ledger-${year}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

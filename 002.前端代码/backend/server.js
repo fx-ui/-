@@ -5,7 +5,10 @@ const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 
-const authRoutes = require('./routes/auth');
+const authRoutes    = require('./routes/auth');
+const recordsRoutes    = require('./routes/records');
+const statsRoutes      = require('./routes/stats');
+const categoriesRoutes = require('./routes/categories');
 
 const app  = express();
 const PORT = process.env.PORT || 3456;
@@ -20,6 +23,9 @@ app.use(express.json());
 //  API 路由
 // ================================================================
 app.use('/api/auth', authRoutes);
+app.use('/api/records', recordsRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/categories', categoriesRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

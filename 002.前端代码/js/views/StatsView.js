@@ -1,164 +1,212 @@
-// 统计页 — 图表分析
+// 统计页 — 年份选择 + 全年统计 + 饼图 + 趋势折线图 + Excel 导出
 import { store } from '../store.js';
-import { findCategory } from '../data/categories.js';
-import { fmtMoney, fmtMonthCN } from '../utils/format.js';
+import { fmtMoney } from '../utils/format.js';
+import {
+  getYearlySummary, getCategoryBreakdown, getMonthlyTrend, downloadCSV,
+} from '../api.js';
 
-const CLRS = ['#FFB6C1','#FF8A80','#FFD166','#B8E6D0','#C599E8','#FFAB91','#90CAF9','#F48FB1','#CE93D8','#A5D6A7'];
+const CLRS = ['#FF8A80','#FFB6C1','#FFD166','#B8E6D0','#C599E8','#FFAB91','#90CAF9','#F48FB1','#CE93D8','#A5D6A7','#80CBC4','#E6EE9C'];
 
 export class StatsView {
   constructor(container) {
     this.container = container;
-    this.range = 'month';   // month|3m|6m|12m
-    this.pieChart = null;
-    this.trendChart = null;
+    this.year      = new Date().getFullYear();
+    this.summary   = { income: 0, expense: 0, balance: 0 };
+    this.breakdown = [];
+    this.trend     = [];
+    this.loading   = false;
+    this.pieChart  = null;
+    this.lineChart = null;
   }
 
-  mount() { this.render(); }
+  async mount() {
+    await this.loadData();
+    this.render();
+  }
 
-  getRangeDates() {
-    const now = new Date();
-    const y = now.getFullYear(), m = now.getMonth();
-    switch (this.range) {
-      case '3m': return { start: new Date(y, m - 2, 1), months: 3 };
-      case '6m': return { start: new Date(y, m - 5, 1), months: 6 };
-      case '12m': return { start: new Date(y - 1, m, 1), months: 12 };
-      default: return { start: new Date(y, m, 1), months: 3 };
+  async loadData() {
+    this.loading = true;
+    try {
+      const [sRes, cRes, tRes] = await Promise.all([
+        getYearlySummary(this.year),
+        getCategoryBreakdown(this.year, 'expense'),
+        getMonthlyTrend(this.year),
+      ]);
+      if (sRes.ok) this.summary   = sRes.data;
+      if (cRes.ok) this.breakdown = cRes.data || [];
+      if (tRes.ok) this.trend     = tRes.data?.months || [];
+    } catch (e) {
+      console.error('Stats load error:', e);
     }
+    this.loading = false;
   }
 
+  async changeYear(y) {
+    this.year = y;
+    this.destroyCharts();
+    await this.loadData();
+    this.render();
+  }
+
+  // ================================================================
   render() {
-    const { start, months } = this.getRangeDates();
-    const startStr = start.toISOString().slice(0, 10);
-    const endStr = new Date().toISOString().slice(0, 10);
-
-    const filtered = store.records.filter(r => r.date >= startStr && r.date <= endStr);
-    const totalOut = filtered.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
-    const totalIn = filtered.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-
-    // 分类统计
-    const catMap = {};
-    filtered.filter(r => r.type === 'expense').forEach(r => {
-      catMap[r.categoryId] = (catMap[r.categoryId] || 0) + r.amount;
-    });
-    const catStats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
-
-    // 月度统计
-    const monthStats = [];
-    for (let i = months - 1; i >= 0; i--) {
-      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
-      const ms = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const mr = store.records.filter(r => r.date.startsWith(ms));
-      monthStats.push({
-        month: ms,
-        income: mr.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0),
-        expense: mr.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0),
-      });
-    }
+    const years = [];
+    const curY = new Date().getFullYear();
+    for (let y = curY; y >= curY - 3; y--) years.push(y);
 
     this.container.innerHTML = `
       <div class="view active">
-        <div class="page-header"><span class="page-header__title">📊 统计分析</span></div>
-
-        <div class="filter-chips mb-lg">
-          <button class="filter-chip ${this.range === 'month' ? 'active' : ''}" data-r="month">本月</button>
-          <button class="filter-chip ${this.range === '3m' ? 'active' : ''}" data-r="3m">近3月</button>
-          <button class="filter-chip ${this.range === '6m' ? 'active' : ''}" data-r="6m">近6月</button>
-          <button class="filter-chip ${this.range === '12m' ? 'active' : ''}" data-r="12m">近1年</button>
+        <div class="page-header">
+          <span class="page-header__title">📊 统计分析</span>
         </div>
 
-        ${filtered.length === 0 ? this.emptyHTML() : `
-          <div class="summary-row">
-            <div class="summary-card"><div class="summary-card__label">💸 支出</div><div class="summary-card__value expense">${fmtMoney(totalOut)}</div></div>
-            <div class="summary-card"><div class="summary-card__label">💰 收入</div><div class="summary-card__value income">${fmtMoney(totalIn)}</div></div>
-            <div class="summary-card"><div class="summary-card__label">💜 结余</div><div class="summary-card__value balance">${fmtMoney(totalIn - totalOut)}</div></div>
+        <!-- ===== 年份选择 ===== -->
+        <div class="filter-chips mb-lg" style="justify-content:center">
+          ${years.map(y => `
+            <button class="filter-chip ${this.year === y ? 'active' : ''}" data-year="${y}">${y}年</button>
+          `).join('')}
+        </div>
+
+        ${this.loading ? '<div class="text-center p-lg" style="font-size:36px">🌸</div>' : `
+          <!-- ===== 1. 年度收支总览 ===== -->
+          <div class="summary-row mb-lg">
+            <div class="summary-card">
+              <div class="summary-card__label">💰 全年收入</div>
+              <div class="summary-card__value income">${fmtMoney(this.summary.income)}</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">💸 全年支出</div>
+              <div class="summary-card__value expense">${fmtMoney(this.summary.expense)}</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card__label">📊 全年结余</div>
+              <div class="summary-card__value" style="color:${this.summary.balance >= 0 ? 'var(--color-income)' : 'var(--color-expense)'}">${fmtMoney(this.summary.balance)}</div>
+            </div>
           </div>
 
-          <div class="card mb-lg"><div class="card__title">支出分类分布</div>
-            <div style="max-width:280px;margin:0 auto"><canvas id="pie-chart"></canvas></div>
+          <!-- ===== 2. 支出分类饼图 ===== -->
+          <div class="card mb-lg">
+            <div class="card__title">📂 支出分类分布（${this.year}年）</div>
+            ${this.breakdown.length === 0
+              ? '<div class="text-center text-secondary p-lg">暂无数据</div>'
+              : '<div style="max-width:280px;margin:0 auto"><canvas id="pie-chart"></canvas></div>'
+            }
           </div>
 
-          <div class="card mb-lg"><div class="card__title">收支趋势</div>
-            <div style="height:240px"><canvas id="trend-chart"></canvas></div>
-          </div>
-
-          <div class="card"><div class="card__title">支出排行 TOP5</div>
-            ${catStats.slice(0, 5).map(([catId, amt], i) => {
-              const cat = findCategory(parseInt(catId));
-              return `<div class="flex items-center justify-between mb-sm" style="padding:8px 0;border-bottom:1px solid var(--color-bg)">
-                <span>${['🥇','🥈','🥉','④','⑤'][i]} ${cat?.icon||'📌'} ${cat?.name||'未知'}</span>
-                <span class="font-semibold text-expense">${fmtMoney(amt)} <span style="font-size:12px;color:#888">${totalOut ? ((amt/totalOut)*100).toFixed(1) : 0}%</span></span>
-              </div>`;
-            }).join('')}
-            ${catStats.length === 0 ? '<div class="text-center text-secondary p-lg">暂无支出</div>' : ''}
+          <!-- ===== 3. 收支趋势折线图 ===== -->
+          <div class="card mb-lg">
+            <div class="card__title">📈 收支趋势（${this.year}年 1-12月）</div>
+            ${this.trend.every(t => t.income === 0 && t.expense === 0)
+              ? '<div class="text-center text-secondary p-lg">暂无数据</div>'
+              : '<div style="height:240px"><canvas id="trend-chart"></canvas></div>'
+            }
           </div>
         `}
-        <div style="height:24px"></div>
+
+        <!-- ===== 4. 导出按钮 ===== -->
+        <button class="btn btn--primary btn--block" id="export-btn" style="height:48px;font-size:15px">
+          📥 导出 ${this.year}年统计 Excel
+        </button>
+        <div style="height:16px"></div>
       </div>`;
 
+    // 年份切换
     this.container.querySelectorAll('.filter-chip').forEach(c => {
-      c.addEventListener('click', () => { this.range = c.dataset.r; this.destroyCharts(); this.render(); });
+      c.addEventListener('click', () => this.changeYear(parseInt(c.dataset.year)));
     });
 
-    if (filtered.length > 0) setTimeout(() => this.renderCharts(catStats, monthStats, totalOut), 100);
+    // 导出
+    this.container.querySelector('#export-btn')?.addEventListener('click', () => {
+      downloadCSV(this.year, this.summary, this.breakdown, this.trend);
+    });
+
+    // 渲染图表
+    if (this.breakdown.length > 0 || this.trend.length > 0) {
+      setTimeout(() => this.renderCharts(), 100);
+    }
   }
 
-  renderCharts(catStats, monthStats, totalOut) {
-    // 饼图
+  renderCharts() {
+    // ===== 饼图 =====
     const pieCtx = this.container.querySelector('#pie-chart');
-    if (pieCtx) {
+    if (pieCtx && this.breakdown.length > 0) {
+      const total = this.breakdown.reduce((s, c) => s + parseFloat(c.total), 0);
+      const top  = this.breakdown.slice(0, 10);
+      const other = this.breakdown.slice(10).reduce((s, c) => s + parseFloat(c.total), 0);
+      const labels = top.map(c => c.name);
+      const data   = top.map(c => c.total);
+      if (other > 0) { labels.push('其他'); data.push(other); }
+
       this.pieChart = new Chart(pieCtx, {
         type: 'doughnut',
         data: {
-          labels: catStats.slice(0, 8).map(([id]) => findCategory(parseInt(id))?.name || '未知'),
-          datasets: [{ data: catStats.slice(0, 8).map(([, a]) => a), backgroundColor: CLRS, borderColor: '#fff', borderWidth: 3, borderRadius: 4 }],
+          labels,
+          datasets: [{
+            data, backgroundColor: CLRS.slice(0, data.length),
+            borderColor: '#fff', borderWidth: 3, borderRadius: 4,
+          }],
         },
         options: {
           cutout: '62%',
           plugins: {
             legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 8, font: { size: 11 } } },
-            tooltip: { callbacks: { label: (ctx) => ` ¥${ctx.parsed.toFixed(2)} (${((ctx.parsed / totalOut) * 100).toFixed(1)}%)` } },
+            tooltip: { callbacks: { label: (ctx) => ` ¥${parseFloat(ctx.parsed).toFixed(2)} (${total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0}%)` } },
           },
         },
-        plugins: [{ id: 'center', afterDraw: (c) => {
-          const { ctx, chartArea: { w, h, t, l } } = c;
-          ctx.save(); ctx.font = "600 13px 'PingFang SC'"; ctx.fillStyle = '#888'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText('总支出', l + w / 2, t + h / 2 - 8);
-          ctx.font = "700 16px 'PingFang SC'"; ctx.fillStyle = '#2D2D2D';
-          ctx.fillText(fmtMoney(totalOut).replace('¥', '¥'), l + w / 2, t + h / 2 + 12);
-          ctx.restore();
-        } }],
+        plugins: [{
+          id: 'center',
+          afterDraw: (c) => {
+            const { ctx, chartArea: { w, h, t, l } } = c;
+            ctx.save(); ctx.font = "600 12px 'PingFang SC'"; ctx.fillStyle = '#888'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('总支出', l + w / 2, t + h / 2 - 8);
+            ctx.font = "700 15px 'PingFang SC'"; ctx.fillStyle = '#2D2D2D';
+            ctx.fillText(fmtMoney(total), l + w / 2, t + h / 2 + 12);
+            ctx.restore();
+          },
+        }],
       });
     }
 
-    // 趋势图
+    // ===== 折线图 =====
     const trendCtx = this.container.querySelector('#trend-chart');
-    if (trendCtx) {
-      this.trendChart = new Chart(trendCtx, {
-        type: 'bar',
+    if (trendCtx && this.trend.length > 0) {
+      this.lineChart = new Chart(trendCtx, {
+        type: 'line',
         data: {
-          labels: monthStats.map(s => fmtMonthCN(s.month)),
+          labels: this.trend.map(t => t.month + '月'),
           datasets: [
-            { label: '支出', data: monthStats.map(s => s.expense), backgroundColor: 'rgba(255,138,128,0.7)', borderRadius: 6, borderSkipped: false, order: 2 },
-            { label: '收入', data: monthStats.map(s => s.income), backgroundColor: 'rgba(184,230,208,0.7)', borderRadius: 6, borderSkipped: false, order: 2 },
-            { label: '结余', data: monthStats.map(s => s.income - s.expense), type: 'line', borderColor: '#C599E8', borderWidth: 2.5, pointRadius: 5, pointBgColor: '#C599E8', tension: .4, fill: true, backgroundColor: 'rgba(197,153,232,0.08)', order: 1 },
+            {
+              label: '收入', data: this.trend.map(t => t.income),
+              borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.08)',
+              borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#4CAF50',
+              tension: 0.4, fill: true,
+            },
+            {
+              label: '支出', data: this.trend.map(t => t.expense),
+              borderColor: '#FF8A80', backgroundColor: 'rgba(255,138,128,0.08)',
+              borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#FF8A80',
+              tension: 0.4, fill: true,
+            },
           ],
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 11 } } } },
-          scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } },
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 11 } } },
+            tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ¥${parseFloat(ctx.parsed.y).toFixed(2)}` } },
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+            x: { grid: { display: false } },
+          },
         },
       });
     }
   }
 
-  emptyHTML() {
-    return `<div class="empty-state"><div class="empty-state__icon">📊</div><div class="empty-state__title">暂无数据</div><div class="empty-state__text">记几笔后再来看分析吧～</div></div>`;
-  }
-
   destroyCharts() {
-    if (this.pieChart) { this.pieChart.destroy(); this.pieChart = null; }
-    if (this.trendChart) { this.trendChart.destroy(); this.trendChart = null; }
+    if (this.pieChart)  { this.pieChart.destroy();  this.pieChart  = null; }
+    if (this.lineChart) { this.lineChart.destroy(); this.lineChart = null; }
   }
 
   destroy() { this.destroyCharts(); }
