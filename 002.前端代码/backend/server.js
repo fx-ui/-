@@ -5,7 +5,7 @@ const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 
-const authRoutes    = require('./routes/auth');
+const authRoutes       = require('./routes/auth');
 const recordsRoutes    = require('./routes/records');
 const statsRoutes      = require('./routes/stats');
 const categoriesRoutes = require('./routes/categories');
@@ -18,6 +18,25 @@ const PORT = process.env.PORT || 3456;
 // ================================================================
 app.use(cors());
 app.use(express.json());
+
+// 请求日志 + 禁用缓存
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
+  // 拦截响应结束，记录日志
+  const origEnd = res.end;
+  res.end = function (...args) {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    const icon = status >= 500 ? '❌' : status >= 400 ? '⚠️' : '✅';
+    console.log(`  ${icon} ${req.method} ${req.originalUrl} → ${status} (${ms}ms)`);
+    origEnd.apply(this, args);
+  };
+  next();
+});
 
 // ================================================================
 //  API 路由
@@ -33,21 +52,20 @@ app.get('/api/health', (req, res) => {
 });
 
 // ================================================================
-//  开发模式 — 禁用浏览器缓存，确保每次加载最新代码
+//  全局错误处理
 // ================================================================
-app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  next();
+app.use((err, req, res, next) => {
+  console.error('❌ 服务器错误:', err.message);
+  console.error(err.stack);
+  res.status(500).json({ code: 500, message: '服务器内部错误: ' + err.message });
 });
 
 // ================================================================
-//  静态文件（前端页面）— 后端与前端在同一父目录下
+//  静态文件（前端页面）
 // ================================================================
 app.use(express.static(path.join(__dirname, '..')));
 
-// SPA fallback — 所有非 API 请求返回 index.html
+// SPA fallback
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(__dirname, '..', 'index.html'));
@@ -61,7 +79,5 @@ app.listen(PORT, () => {
   console.log(`🌸  每日记账服务已启动`);
   console.log(`📍  前端页面: http://localhost:${PORT}`);
   console.log(`📡  API 地址:  http://localhost:${PORT}/api`);
-  console.log(`🔑  登录接口:  POST http://localhost:${PORT}/api/auth/login`);
-  console.log(`🔑  注册接口:  POST http://localhost:${PORT}/api/auth/register`);
   console.log('──────────────────────────────────────');
 });
