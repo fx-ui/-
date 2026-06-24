@@ -104,7 +104,7 @@ router.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('List records error:', err);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    res.status(500).json({ code: 500, message: '服务器错误: ' + err.message });
   } finally {
     conn.release();
   }

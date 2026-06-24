@@ -49,27 +49,38 @@ export function isLoggedIn() {
 //  通用请求方法
 // ================================================================
 async function request(url, options = {}) {
-  const config = {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  };
+  try {
+    const config = {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    };
 
-  // 自动附加 Authorization header
-  const token = getToken();
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+    const token = getToken();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(BASE + url, config);
+
+    // 如果响应不是 JSON（比如 HTML 错误页），安全处理
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { message: '服务器返回了非 JSON 数据，状态码: ' + res.status };
+    }
+
+    if (!res.ok && res.status === 401) {
+      removeToken();
+      removeCurrentUser();
+    }
+
+    return { ok: res.ok, status: res.status, ...data };
+  } catch (err) {
+    // 网络错误等
+    console.error('API 请求失败:', url, err.message);
+    return { ok: false, status: 0, message: '网络请求失败: ' + err.message };
   }
-
-  const res = await fetch(BASE + url, config);
-  const data = await res.json();
-
-  if (!res.ok && res.status === 401) {
-    // Token 过期或无效 — 清除登录状态
-    removeToken();
-    removeCurrentUser();
-  }
-
-  return { ok: res.ok, status: res.status, ...data };
 }
 
 // ================================================================
