@@ -106,6 +106,16 @@ export function fetchCategories(type = 'expense') {
   return request('/categories?type=' + type);
 }
 
+/** 新增自定义分类 */
+export function addCategory(data) {
+  return request('/categories', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** 删除自定义分类 */
+export function deleteCategory(id) {
+  return request('/categories/' + id, { method: 'DELETE' });
+}
+
 // ================================================================
 //  账单记录 API
 // ================================================================

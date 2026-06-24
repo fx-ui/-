@@ -5,8 +5,7 @@ import { defaultAccounts } from '../data/accounts.js';
 import { fmtMoney } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { Modal } from '../components/Modal.js';
-import { getCategories } from '../data/categories.js';
-import { getCurrentUser, isLoggedIn, removeToken, removeCurrentUser } from '../api.js';
+import { getCurrentUser, isLoggedIn, removeToken, removeCurrentUser, fetchCategories, addCategory, deleteCategory } from '../api.js';
 
 export class SettingsView {
   constructor(container, subpage) {
@@ -62,7 +61,7 @@ export class SettingsView {
           ${[
             { icon:'🏦',bg:'#FFD6E0',label:'账户管理',hash:'#/settings/accounts',info:store.accounts.length+'个账户'},
             { icon:'🎯',bg:'#FFD166',label:'预算设置',hash:'#/settings/budget',info:store.budgets.length+'项预算'},
-            { icon:'📂',bg:'#B8E6D0',label:'分类管理',hash:'#/settings/categories',info:'支出'+getCategories('expense').length+'项'},
+            { icon:'📂',bg:'#B8E6D0',label:'分类管理',hash:'#/settings/categories',info:'查看管理'},
             { icon:'⚡',bg:'#C599E8',label:'记账模板',hash:'#/settings/templates',info:store.templates.length+'个模板'},
             { icon:'📤',bg:'#FFB6C1',label:'数据管理',hash:'#/settings/export',info:'导出/导入'},
           ].map(m => `
@@ -169,21 +168,95 @@ export class SettingsView {
   }
 
   // ===== 分类管理 =====
-  renderCategories() {
-    const expCats = getCategories('expense');
-    const incCats = getCategories('income');
+  async renderCategories() {
     this.container.innerHTML = `
       <div class="view active">
         <div class="page-header"><button class="page-header__back" data-back>←</button><span class="page-header__title">📂 分类管理</span></div>
-        <div class="card mb-lg"><div class="card__title">💸 支出分类 (${expCats.length})</div>
-          ${expCats.map(c => `<div class="flex items-center justify-between mb-sm" style="padding:8px 0;border-bottom:1px solid var(--color-bg)"><span>${c.icon} ${c.name} <span class="text-light" style="font-size:11px">${c.parent}</span></span><span class="text-light" style="font-size:11px">预置</span></div>`).join('')}
-        </div>
-        <div class="card"><div class="card__title">💰 收入分类 (${incCats.length})</div>
-          ${incCats.map(c => `<div class="flex items-center justify-between mb-sm" style="padding:8px 0;border-bottom:1px solid var(--color-bg)"><span>${c.icon} ${c.name} <span class="text-light" style="font-size:11px">${c.parent}</span></span><span class="text-light" style="font-size:11px">预置</span></div>`).join('')}
-        </div>
+        <div id="cats-content" class="text-center p-lg" style="font-size:36px">🌸</div>
         <div style="height:24px"></div>
       </div>`;
     this.bindBack();
+    await this.loadCategoriesList();
+  }
+
+  async loadCategoriesList() {
+    const content = this.container.querySelector('#cats-content');
+    if (!content) return;
+    try {
+      const [expRes, incRes] = await Promise.all([
+        fetchCategories('expense'),
+        fetchCategories('income'),
+      ]);
+      const expCats = expRes.ok ? (expRes.data || []) : [];
+      const incCats = incRes.ok ? (incRes.data || []) : [];
+
+      // 展平
+      const flatExp = []; const flatInc = [];
+      expCats.forEach(p => {
+        flatExp.push({ ...p, isSystem: true });
+        (p.children || []).forEach(c => flatExp.push({ ...c, parentName: p.name, isSystem: true }));
+      });
+      incCats.forEach(p => {
+        flatInc.push({ ...p, isSystem: true });
+        (p.children || []).forEach(c => flatInc.push({ ...c, parentName: p.name, isSystem: true }));
+      });
+
+      content.innerHTML = `
+        <div class="card mb-lg">
+          <div class="card__title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>💸 支出分类 (${flatExp.length})</span>
+            <button class="btn btn--sm btn--primary" id="add-exp-cat">+ 添加</button>
+          </div>
+          ${flatExp.map(c => `
+            <div class="flex items-center justify-between mb-sm" style="padding:8px 0;border-bottom:1px solid var(--color-bg)">
+              <span>${c.icon} ${c.name} ${c.parentName ? `<span class="text-light" style="font-size:11px">←${c.parentName}</span>` : ''}</span>
+              <span class="text-light" style="font-size:11px">${c.user_id ? '自定义' : '预置'}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="card">
+          <div class="card__title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>💰 收入分类 (${flatInc.length})</span>
+            <button class="btn btn--sm btn--primary" id="add-inc-cat">+ 添加</button>
+          </div>
+          ${flatInc.map(c => `
+            <div class="flex items-center justify-between mb-sm" style="padding:8px 0;border-bottom:1px solid var(--color-bg)">
+              <span>${c.icon} ${c.name} ${c.parentName ? `<span class="text-light" style="font-size:11px">←${c.parentName}</span>` : ''}</span>
+              <span class="text-light" style="font-size:11px">${c.user_id ? '自定义' : '预置'}</span>
+            </div>
+          `).join('')}
+        </div>`;
+
+      // 添加按钮
+      this.container.querySelector('#add-exp-cat')?.addEventListener('click', () => this.handleAddCategory('expense', expCats));
+      this.container.querySelector('#add-inc-cat')?.addEventListener('click', () => this.handleAddCategory('income', incCats));
+    } catch (e) {
+      content.innerHTML = '<div class="text-center text-secondary p-lg">加载失败</div>';
+    }
+  }
+
+  async handleAddCategory(type, parents) {
+    const name = prompt('分类名称：');
+    if (!name || !name.trim()) return;
+    const icon = prompt('图标（emoji），如 🍕：', '📌') || '📌';
+
+    // 选择父分类
+    let parentId = null;
+    if (parents && parents.length > 0) {
+      const list = parents.map((p, i) => `${i + 1}. ${p.icon} ${p.name}`).join('\n');
+      const choice = prompt(`选择父分类（输入序号），不选则创建一级分类：\n0. 无（一级分类）\n${list}`, '0');
+      if (choice && parseInt(choice) > 0 && parseInt(choice) <= parents.length) {
+        parentId = parents[parseInt(choice) - 1].id;
+      }
+    }
+
+    const res = await addCategory({ name: name.trim(), icon, type, parentId });
+    if (res.ok) {
+      Toast.success('分类已添加');
+      await this.loadCategoriesList();
+    } else {
+      Toast.warning(res.message || '添加失败');
+    }
   }
 
   // ===== 模板管理 =====
