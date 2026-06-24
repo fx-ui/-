@@ -185,30 +185,30 @@ export function downloadExcel(year, summary, breakdown, trend) {
   const b = breakdown || [];
   const t = trend || [];
 
-  let html = '<html><head><meta charset="UTF-8"></head><body>';
-  html += `<table><tr><td colspan="4" style="font-size:16px;font-weight:bold;text-align:center">${year}年 每日记账统计报告</td></tr></table><br>`;
+  let csv = '';
+  csv += `${year}年 每日记账统计报告\n\n`;
+  csv += '年度总览\n';
+  csv += '全年收入,全年支出,全年结余\n';
+  csv += `${s.income || 0},${s.expense || 0},${s.balance || 0}\n\n`;
+  csv += '支出分类统计\n';
+  csv += '分类,金额\n';
+  b.forEach(c => { csv += `${c.name},${c.total}\n`; });
+  csv += '\n月度趋势\n';
+  csv += '月份,收入,支出,结余\n';
+  t.forEach(m => { csv += `${m.month}月,${m.income},${m.expense},${(m.income - m.expense).toFixed(2)}\n`; });
 
-  html += `<table border="1"><tr><td colspan="4" style="font-weight:bold">年度总览</td></tr>`;
-  html += `<tr><td>全年收入</td><td>${s.income || 0}</td><td>全年支出</td><td>${s.expense || 0}</td></tr>`;
-  html += `<tr><td>全年结余</td><td colspan="3">${s.balance || 0}</td></tr></table><br>`;
-
-  html += `<table border="1"><tr><td colspan="2" style="font-weight:bold">支出分类统计</td></tr>`;
-  html += '<tr><td>分类</td><td>金额</td></tr>';
-  b.forEach(c => { html += `<tr><td>${c.name}</td><td>${c.total}</td></tr>`; });
-  html += '</table><br>';
-
-  html += `<table border="1"><tr><td colspan="4" style="font-weight:bold">月度趋势</td></tr>`;
-  html += '<tr><td>月份</td><td>收入</td><td>支出</td><td>结余</td></tr>';
-  t.forEach(m => { html += `<tr><td>${m.month}月</td><td>${m.income}</td><td>${m.expense}</td><td>${(m.income - m.expense).toFixed(2)}</td></tr>`; });
-  html += '</table></body></html>';
-
-  // UTF-8 BOM + 编码声明，确保 Excel 正确识别中文
+  // UTF-8 BOM 二进制写入，Excel 正确识别中文
   const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-  const blob = new Blob([bom, html], { type: 'application/vnd.ms-excel;charset=UTF-8' });
+  const enc = new TextEncoder().encode(csv);
+  const buf = new Uint8Array(bom.length + enc.length);
+  buf.set(bom);
+  buf.set(enc, bom.length);
+
+  const blob = new Blob([buf], { type: 'text/csv;charset=UTF-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `daily-ledger-${year}.xls`;
+  a.download = `daily-ledger-${year}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
