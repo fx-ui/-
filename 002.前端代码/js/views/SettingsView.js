@@ -319,7 +319,13 @@ export class SettingsView {
   }
 
   bindBack() {
-    this.container.querySelector('[data-back]')?.addEventListener('click', () => router.go('#/settings'));
+    const btn = this.container.querySelector('[data-back]');
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        router.go('#/settings');
+      });
+    }
   }
 
   destroy() {}
