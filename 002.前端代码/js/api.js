@@ -185,32 +185,28 @@ export function downloadExcel(year, summary, breakdown, trend) {
   const b = breakdown || [];
   const t = trend || [];
 
-  let csv = '';
-  csv += `${year}年 每日记账统计报告\n\n`;
-  csv += '年度总览\n';
-  csv += '全年收入,全年支出,全年结余\n';
-  csv += `${s.income || 0},${s.expense || 0},${s.balance || 0}\n\n`;
-  csv += '支出分类统计\n';
-  csv += '分类,金额\n';
-  b.forEach(c => { csv += `${c.name},${c.total}\n`; });
-  csv += '\n月度趋势\n';
-  csv += '月份,收入,支出,结余\n';
-  t.forEach(m => { csv += `${m.month}月,${m.income},${m.expense},${(m.income - m.expense).toFixed(2)}\n`; });
+  // 构建工作表数据
+  const sheetData = [
+    [`${year}年 每日记账统计报告`],
+    [],
+    ['年度总览'],
+    ['全年收入', '全年支出', '全年结余'],
+    [s.income || 0, s.expense || 0, s.balance || 0],
+    [],
+    ['支出分类统计'],
+    ['分类', '金额'],
+  ];
+  b.forEach(c => { sheetData.push([c.name, c.total]); });
+  sheetData.push([]);
+  sheetData.push(['月度趋势']);
+  sheetData.push(['月份', '收入', '支出', '结余']);
+  t.forEach(m => {
+    sheetData.push([`${m.month}月`, m.income, m.expense, (m.income - m.expense).toFixed(2)]);
+  });
 
-  // UTF-8 BOM 二进制写入，Excel 正确识别中文
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-  const enc = new TextEncoder().encode(csv);
-  const buf = new Uint8Array(bom.length + enc.length);
-  buf.set(bom);
-  buf.set(enc, bom.length);
-
-  const blob = new Blob([buf], { type: 'text/csv;charset=UTF-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `daily-ledger-${year}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // 用 SheetJS 生成 .xlsx
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  XLSX.utils.book_append_sheet(wb, ws, `${year}年统计`);
+  XLSX.writeFile(wb, `daily-ledger-${year}.xlsx`);
 }
