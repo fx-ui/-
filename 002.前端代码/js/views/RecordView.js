@@ -126,7 +126,7 @@ export class RecordView {
       type:       this.type,
       amount,
       categoryId: this.selectedCat.id,
-      accountId:  accountId || null,
+      accountId:  null,   // 账户功能暂未对接DB，传 null
       recordDate: date,
       note:       note || null,
     });
