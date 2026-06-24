@@ -65,13 +65,13 @@ export class SettingsView {
             { icon:'⚡',bg:'#C599E8',label:'记账模板',hash:'#/settings/templates',info:store.templates.length+'个模板'},
             { icon:'📤',bg:'#FFB6C1',label:'数据管理',hash:'#/settings/export',info:'导出/导入'},
           ].map(m => `
-            <a href="${m.hash}" class="settings-menu__item">
+            <div class="settings-menu__item" data-nav="${m.hash}" style="cursor:pointer">
               <div class="settings-menu__left">
                 <div class="settings-menu__icon" style="background:${m.bg}">${m.icon}</div>
                 <span class="settings-menu__label">${m.label}</span>
               </div>
               <div class="settings-menu__right"><span style="font-size:12px;margin-right:4px">${m.info}</span> ›</div>
-            </a>
+            </div>
           `).join('')}
         </div>
 
@@ -80,6 +80,13 @@ export class SettingsView {
         </div>
         <div style="height:24px"></div>
       </div>`;
+
+    // 菜单项点击跳转
+    this.container.querySelectorAll('[data-nav]').forEach(el => {
+      el.addEventListener('click', () => {
+        router.go(el.dataset.nav);
+      });
+    });
 
     // 退出登录 — 直接退出，弹原生确认框
     this.container.querySelector('#settings-logout')?.addEventListener('click', () => {
