@@ -179,22 +179,45 @@ export function getMonthlyTrend(year) {
   return request('/stats/monthly-trend?year=' + year);
 }
 
-/** 导出 CSV（前端直接生成下载） */
-export function downloadCSV(year, summary, breakdown, trend) {
-  let csv = '﻿'; // BOM for Excel UTF-8
-  csv += `${year}年 每日记账统计报告\n\n`;
-  csv += `年度总览\n全年收入,全年支出,全年结余\n`;
-  csv += `${summary.income},${summary.expense},${summary.balance}\n\n`;
-  csv += `支出分类统计\n分类,金额\n`;
-  breakdown.forEach(c => csv += `${c.name},${c.total}\n`);
-  csv += `\n月度趋势\n月份,收入,支出,结余\n`;
-  (trend || []).forEach(t => csv += `${t.month}月,${t.income},${t.expense},${(t.income - t.expense).toFixed(2)}\n`);
+/** 导出 Excel（HTML 表格格式，Excel 可直接打开） */
+export function downloadExcel(year, summary, breakdown, trend) {
+  const rows = (trend || []).map(t => `
+    <tr><td>${t.month}月</td><td>${t.income}</td><td>${t.expense}</td><td>${(t.income - t.expense).toFixed(2)}</td></tr>
+  `).join('');
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const catRows = breakdown.map(c => `
+    <tr><td>${c.name}</td><td>${c.total}</td></tr>
+  `).join('');
+
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+    <x:ExcelWorksheet><x:Name>${year}年统计</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
+    </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+    <body>
+      <h2>${year}年 每日记账统计报告</h2>
+      <h3>年度总览</h3>
+      <table border="1">
+        <tr><th>全年收入</th><th>全年支出</th><th>全年结余</th></tr>
+        <tr><td>${summary.income}</td><td>${summary.expense}</td><td>${summary.balance}</td></tr>
+      </table>
+      <h3>支出分类统计</h3>
+      <table border="1">
+        <tr><th>分类</th><th>金额</th></tr>
+        ${catRows}
+      </table>
+      <h3>月度趋势</h3>
+      <table border="1">
+        <tr><th>月份</th><th>收入</th><th>支出</th><th>结余</th></tr>
+        ${rows}
+      </table>
+    </body></html>`;
+
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `daily-ledger-${year}.csv`;
+  a.download = `daily-ledger-${year}.xls`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
