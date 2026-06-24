@@ -181,39 +181,31 @@ export function getMonthlyTrend(year) {
 
 /** 导出 Excel（HTML 表格格式，Excel 可直接打开） */
 export function downloadExcel(year, summary, breakdown, trend) {
-  const rows = (trend || []).map(t => `
-    <tr><td>${t.month}月</td><td>${t.income}</td><td>${t.expense}</td><td>${(t.income - t.expense).toFixed(2)}</td></tr>
-  `).join('');
+  const s = summary || {};
+  const b = breakdown || [];
+  const t = trend || [];
 
-  const catRows = breakdown.map(c => `
-    <tr><td>${c.name}</td><td>${c.total}</td></tr>
-  `).join('');
+  let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>`;
+  html += `<table border="1"><tr><td colspan="4" style="font-size:16px;font-weight:bold;text-align:center">${year}年 每日记账统计报告</td></tr></table><br>`;
 
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
-    <x:ExcelWorksheet><x:Name>${year}年统计</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>
-    </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
-    <body>
-      <h2>${year}年 每日记账统计报告</h2>
-      <h3>年度总览</h3>
-      <table border="1">
-        <tr><th>全年收入</th><th>全年支出</th><th>全年结余</th></tr>
-        <tr><td>${summary.income}</td><td>${summary.expense}</td><td>${summary.balance}</td></tr>
-      </table>
-      <h3>支出分类统计</h3>
-      <table border="1">
-        <tr><th>分类</th><th>金额</th></tr>
-        ${catRows}
-      </table>
-      <h3>月度趋势</h3>
-      <table border="1">
-        <tr><th>月份</th><th>收入</th><th>支出</th><th>结余</th></tr>
-        ${rows}
-      </table>
-    </body></html>`;
+  // 年度总览
+  html += `<table border="1"><tr><td colspan="4" style="font-weight:bold">年度总览</td></tr>`;
+  html += `<tr><td>全年收入</td><td>${s.income || 0}</td><td>全年支出</td><td>${s.expense || 0}</td></tr>`;
+  html += `<tr><td>全年结余</td><td colspan="3">${s.balance || 0}</td></tr></table><br>`;
 
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  // 支出分类
+  html += `<table border="1"><tr><td colspan="2" style="font-weight:bold">支出分类统计</td></tr>`;
+  html += `<tr><td>分类</td><td>金额</td></tr>`;
+  b.forEach(c => { html += `<tr><td>${c.name}</td><td>${c.total}</td></tr>`; });
+  html += `</table><br>`;
+
+  // 月度趋势
+  html += `<table border="1"><tr><td colspan="4" style="font-weight:bold">月度趋势</td></tr>`;
+  html += `<tr><td>月份</td><td>收入</td><td>支出</td><td>结余</td></tr>`;
+  t.forEach(m => { html += `<tr><td>${m.month}月</td><td>${m.income}</td><td>${m.expense}</td><td>${(m.income - m.expense).toFixed(2)}</td></tr>`; });
+  html += `</table></body></html>`;
+
+  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
