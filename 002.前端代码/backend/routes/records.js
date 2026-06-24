@@ -63,7 +63,26 @@ router.get('/', async (req, res) => {
     const limit     = parseInt(req.query.limit)  || 20;
     const offset    = parseInt(req.query.offset) || 0;
 
-    let sql = `
+    // WHERE 条件
+    let where = 'WHERE r.user_id = ? AND r.is_deleted = 0';
+    const params = [userId];
+
+    if (month) {
+      where += ' AND DATE_FORMAT(r.record_date, "%Y-%m") = ?';
+      params.push(month);
+    }
+    if (type) {
+      where += ' AND r.type = ?';
+      params.push(type);
+    }
+
+    // 获取总数
+    const countSql = `SELECT COUNT(*) AS total FROM records r ${where}`;
+    const [countRows] = await conn.query(countSql, params);
+    const total = countRows[0].total;
+
+    // 查询数据
+    const sql = `
       SELECT r.id, r.type, r.amount, r.record_date, r.note,
              r.category_id, r.account_id, r.created_at,
              c.name AS category_name, c.icon AS category_icon,
@@ -71,25 +90,10 @@ router.get('/', async (req, res) => {
       FROM records r
       LEFT JOIN categories c ON r.category_id = c.id
       LEFT JOIN accounts a   ON r.account_id  = a.id
-      WHERE r.user_id = ? AND r.is_deleted = 0
+      ${where}
+      ORDER BY r.record_date DESC, r.created_at DESC
+      LIMIT ? OFFSET ?
     `;
-    const params = [userId];
-
-    if (month) {
-      sql += ' AND DATE_FORMAT(r.record_date, "%Y-%m") = ?';
-      params.push(month);
-    }
-    if (type) {
-      sql += ' AND r.type = ?';
-      params.push(type);
-    }
-
-    // 获取总数
-    const countSql = sql.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) AS total FROM');
-    const [countRows] = await conn.query(countSql, params);
-    const total = countRows[0].total;
-
-    sql += ' ORDER BY r.record_date DESC, r.created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     const [rows] = await conn.query(sql, params);
