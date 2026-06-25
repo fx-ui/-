@@ -9,6 +9,9 @@ const authRoutes       = require('./routes/auth');
 const recordsRoutes    = require('./routes/records');
 const statsRoutes      = require('./routes/stats');
 const categoriesRoutes = require('./routes/categories');
+const accountsRoutes   = require('./routes/accounts');
+const budgetsRoutes    = require('./routes/budgets');
+const templatesRoutes  = require('./routes/templates');
 
 const app  = express();
 const PORT = process.env.PORT || 3456;
@@ -45,6 +48,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/records', recordsRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/categories', categoriesRoutes);
+app.use('/api/accounts',   accountsRoutes);
+app.use('/api/budgets',    budgetsRoutes);
+app.use('/api/templates',  templatesRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -65,6 +71,7 @@ app.use((err, req, res, next) => {
 // ================================================================
 app.use('/css',  express.static(path.join(__dirname, '..', 'css')));
 app.use('/js',   express.static(path.join(__dirname, '..', 'js')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
 
 // 禁止访问 backend 目录

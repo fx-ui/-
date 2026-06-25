@@ -111,6 +111,79 @@ router.get('/', async (req, res) => {
 });
 
 // ================================================================
+//  PUT /api/records/:id — 编辑一条记录
+// ================================================================
+router.put('/:id', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.id;
+    const id     = parseInt(req.params.id);
+    const { type, amount, categoryId, accountId, recordDate, note } = req.body;
+
+    // 查出原记录
+    const [rows] = await conn.query(
+      'SELECT id, type, amount, account_id FROM records WHERE id = ? AND user_id = ? AND is_deleted = 0',
+      [id, userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ code: 404, message: '记录不存在' });
+    }
+
+    const old = rows[0];
+    const newType       = type       || old.type;
+    const newAmount     = amount     !== undefined ? amount     : old.amount;
+    const newCategoryId = categoryId || null;
+    const newAccountId  = accountId  !== undefined ? accountId  : old.account_id;
+    const newDate       = recordDate || null;
+    const newNote       = note       !== undefined ? note       : null;
+
+    if (newAmount <= 0) {
+      return res.status(400).json({ code: 400, message: '金额必须大于0' });
+    }
+
+    // 事务：更新记录 + 修正账户余额
+    await conn.beginTransaction();
+    try {
+      // 1. 回滚旧账户余额
+      if (old.account_id) {
+        const oldDelta = old.type === 'income' ? -old.amount : old.amount;
+        await conn.query(
+          'UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?',
+          [oldDelta, old.account_id, userId]
+        );
+      }
+
+      // 2. 更新记录
+      await conn.query(
+        `UPDATE records SET type = ?, amount = ?, category_id = ?, account_id = ?, record_date = ?, note = ?
+         WHERE id = ? AND user_id = ?`,
+        [newType, newAmount, newCategoryId, newAccountId || null, newDate, newNote, id, userId]
+      );
+
+      // 3. 应用新账户余额
+      if (newAccountId) {
+        const newDelta = newType === 'income' ? newAmount : -newAmount;
+        await conn.query(
+          'UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?',
+          [newDelta, newAccountId, userId]
+        );
+      }
+
+      await conn.commit();
+      res.json({ code: 200, message: '已更新' });
+    } catch (txErr) {
+      await conn.rollback();
+      throw txErr;
+    }
+  } catch (err) {
+    console.error('Update record error:', err);
+    res.status(500).json({ code: 500, message: '服务器错误: ' + err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// ================================================================
 //  DELETE /api/records/:id — 硬删除一条记录
 // ================================================================
 router.delete('/:id', async (req, res) => {

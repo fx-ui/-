@@ -3,3 +3,17 @@ node_modules/
 
 # Claude 本地配置
 .claude/
+
+# Java 构建产物
+target/
+*.class
+*.jar
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 上传文件（运行时生成）
+uploads/

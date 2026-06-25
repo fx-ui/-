@@ -1,10 +1,9 @@
-// 记账页 — 核心录入（对接后端 API，从数据库获取分类）
+// 记账页 — 核心录入（对接后端 API，从数据库获取分类和账户）
 import { store, EV } from '../store.js';
-import { defaultAccounts } from '../data/accounts.js';
 import { today, fmtMoney } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { CategoryPicker } from '../components/CategoryPicker.js';
-import { createRecord, fetchCategories } from '../api.js';
+import { createRecord, fetchCategories, getAccounts } from '../api.js?v=14';
 
 export class RecordView {
   constructor(container) {
@@ -12,15 +11,16 @@ export class RecordView {
     this.type      = 'expense';
     this.selectedCat = null;
     this.cats      = [];        // 扁平分类 [{id, name, icon, parent}]
+    this.accounts  = [];        // 从后端加载的账户列表
     this.picker    = null;
     this.saving    = false;
   }
 
   async mount() {
-    if (store.accounts.length === 0) {
-      store.accounts = defaultAccounts.map(a => ({ ...a }));
-    }
-    await this.loadCategories();
+    await Promise.all([
+      this.loadCategories(),
+      this.loadAccounts(),
+    ]);
     this.render();
   }
 
@@ -40,6 +40,18 @@ export class RecordView {
       }
     } catch (e) {
       console.error('Load categories error:', e);
+    }
+  }
+
+  async loadAccounts() {
+    try {
+      const res = await getAccounts();
+      if (res.ok && res.data) {
+        this.accounts = res.data;
+        store.accounts = res.data;
+      }
+    } catch (e) {
+      console.error('Load accounts error:', e);
     }
   }
 
@@ -76,7 +88,7 @@ export class RecordView {
           <div class="input-group">
             <label class="input-label">🏦 账户</label>
             <select id="rec-account" class="input">
-              ${store.accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name}</option>`).join('')}
+              ${this.accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name}</option>`).join('')}
             </select>
           </div>
           <div class="input-group">
@@ -126,7 +138,7 @@ export class RecordView {
       type:       this.type,
       amount,
       categoryId: this.selectedCat.id,
-      accountId:  null,   // 账户功能暂未对接DB，传 null
+      accountId:  accountId || null,   // 从下拉选择获取真实账户 ID
       recordDate: date,
       note:       note || null,
     });

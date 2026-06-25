@@ -2,7 +2,7 @@
 import { fmtMoney } from '../utils/format.js';
 import {
   getYearlySummary, getCategoryBreakdown, getMonthlyTrend, downloadExcel,
-} from '../api.js';
+} from '../api.js?v=14';
 
 const CLRS = ['#FF8A80','#FFB6C1','#FFD166','#B8E6D0','#C599E8','#FFAB91','#90CAF9','#F48FB1','#CE93D8','#A5D6A7','#80CBC4','#E6EE9C'];
 

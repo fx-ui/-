@@ -108,6 +108,59 @@ export function getProfile() {
   return request('/auth/me');
 }
 
+/** 修改个人信息（昵称、头像等） */
+export function updateProfile(data) {
+  return request('/auth/me', { method: 'PUT', body: JSON.stringify(data) });
+}
+
+/** 上传头像（multipart/form-data） */
+export async function uploadAvatar(file) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  try {
+    const token = getToken();
+    const res = await fetch(BASE + '/auth/avatar', {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, ...data };
+  } catch (err) {
+    console.error('Avatar upload error:', err);
+    return { ok: false, status: 0, message: '上传失败: ' + err.message };
+  }
+}
+
+// ================================================================
+//  账户 API
+// ================================================================
+
+/** 获取账户列表 */
+export function getAccounts() {
+  return request('/accounts');
+}
+
+/** 新增账户 */
+export function createAccount(data) {
+  return request('/accounts', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** 修改账户 */
+export function updateAccount(id, data) {
+  return request('/accounts/' + id, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+/** 删除账户 */
+export function deleteAccount(id) {
+  return request('/accounts/' + id, { method: 'DELETE' });
+}
+
+/** 获取用户资产总览 */
+export function getAccountsSummary() {
+  return request('/accounts/summary');
+}
+
 // ================================================================
 //  分类 API
 // ================================================================
@@ -145,9 +198,58 @@ export function getRecords(params = {}) {
   return request('/records' + (qs ? '?' + qs : ''));
 }
 
+/** 编辑记录 */
+export function editRecord(id, data) {
+  return request('/records/' + id, { method: 'PUT', body: JSON.stringify(data) });
+}
+
 /** 删除记录 */
 export function deleteRecord(id) {
   return request('/records/' + id, { method: 'DELETE' });
+}
+
+// ================================================================
+//  预算 API
+// ================================================================
+
+/** 获取预算列表 */
+export function getBudgets(month) {
+  const qs = month ? '?month=' + encodeURIComponent(month) : '';
+  return request('/budgets' + qs);
+}
+
+/** 设置/更新预算 */
+export function saveBudget(data) {
+  return request('/budgets', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** 删除预算 */
+export function deleteBudget(id) {
+  return request('/budgets/' + id, { method: 'DELETE' });
+}
+
+// ================================================================
+//  模板 API
+// ================================================================
+
+/** 获取模板列表 */
+export function getTemplates() {
+  return request('/templates');
+}
+
+/** 创建模板 */
+export function createTemplate(data) {
+  return request('/templates', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** 使用模板（增加计数） */
+export function useTemplate(id) {
+  return request('/templates/' + id + '/use', { method: 'POST' });
+}
+
+/** 删除模板 */
+export function deleteTemplate(id) {
+  return request('/templates/' + id, { method: 'DELETE' });
 }
 
 // ================================================================
