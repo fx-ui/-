@@ -69,10 +69,10 @@ app.use((err, req, res, next) => {
 // ================================================================
 //  静态文件（仅暴露前端资源，禁止访问 backend 目录）
 // ================================================================
-app.use('/css',  express.static(path.join(__dirname, '..', 'css')));
-app.use('/js',   express.static(path.join(__dirname, '..', 'js')));
+app.use('/css',  express.static(path.join(__dirname, '..', 'frontend', 'css')));
+app.use('/js',   express.static(path.join(__dirname, '..', 'frontend', 'js')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+app.use('/assets', express.static(path.join(__dirname, '..', 'frontend', 'assets')));
 
 // 禁止访问 backend 目录
 app.use('/backend', (req, res) => {
@@ -82,7 +82,7 @@ app.use('/backend', (req, res) => {
 // SPA fallback — index.html 处理所有其他非 API 请求
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
 // ================================================================
