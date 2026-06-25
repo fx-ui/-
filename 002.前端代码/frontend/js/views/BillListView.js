@@ -5,7 +5,7 @@ import { Toast } from '../components/Toast.js';
 import { Modal } from '../components/Modal.js';
 import {
   getRecords, deleteRecord, editRecord, getMonthlySummary, getCategoryRanking, fetchCategories,
-} from '../api.js?v=14';
+} from '../api.js?v=15';
 
 export class BillListView {
   constructor(container) {

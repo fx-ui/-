@@ -1,6 +1,6 @@
 // 注册页
 import { router } from '../router.js';
-import { isLoggedIn, register, setToken, setCurrentUser } from '../api.js?v=14';
+import { isLoggedIn, register, setToken, setCurrentUser } from '../api.js?v=15';
 
 export class RegisterView {
   constructor(container) {

@@ -1,6 +1,6 @@
 // 登录页
 import { router } from '../router.js';
-import { isLoggedIn, login, setToken, setCurrentUser } from '../api.js?v=14';
+import { isLoggedIn, login, setToken, setCurrentUser } from '../api.js?v=15';
 
 export class LoginView {
   constructor(container) {

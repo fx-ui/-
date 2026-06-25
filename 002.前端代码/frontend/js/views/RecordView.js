@@ -3,7 +3,7 @@ import { store, EV } from '../store.js';
 import { today, fmtMoney } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { CategoryPicker } from '../components/CategoryPicker.js';
-import { createRecord, fetchCategories, getAccounts } from '../api.js?v=14';
+import { createRecord, fetchCategories, getAccounts } from '../api.js?v=15';
 
 export class RecordView {
   constructor(container) {

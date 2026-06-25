@@ -5,7 +5,7 @@ import { defaultAccounts } from '../data/accounts.js';
 import { fmtMoney } from '../utils/format.js';
 import { Toast } from '../components/Toast.js';
 import { Modal } from '../components/Modal.js';
-import { getCurrentUser, setCurrentUser, getProfile, isLoggedIn, removeToken, removeCurrentUser, fetchCategories, addCategory, deleteCategory, getAccounts, createAccount, deleteAccount, getAccountsSummary, getBudgets, saveBudget, deleteBudget, getTemplates, createTemplate, deleteTemplate, useTemplate, updateProfile, uploadAvatar } from '../api.js?v=14';
+import { getCurrentUser, setCurrentUser, getProfile, isLoggedIn, removeToken, removeCurrentUser, fetchCategories, addCategory, deleteCategory, getAccounts, createAccount, deleteAccount, getAccountsSummary, getBudgets, saveBudget, deleteBudget, getTemplates, createTemplate, deleteTemplate, useTemplate, updateProfile, uploadAvatar } from '../api.js?v=15';
 
 export class SettingsView {
   constructor(container, subpage) {

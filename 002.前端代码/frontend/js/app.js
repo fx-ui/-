@@ -7,7 +7,7 @@ import { BillListView } from './views/BillListView.js';
 import { StatsView } from './views/StatsView.js';
 import { SettingsView } from './views/SettingsView.js';
 import { LoginView } from './views/LoginView.js';
-import { isLoggedIn } from './api.js?v=14';
+import { isLoggedIn } from './api.js?v=15';
 import { RegisterView } from './views/RegisterView.js';
 
 let tabBar = null;

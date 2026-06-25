@@ -28,6 +28,7 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  res.set('X-Content-Type-Options', 'nosniff');
 
   // 拦截响应结束，记录日志
   const origEnd = res.end;

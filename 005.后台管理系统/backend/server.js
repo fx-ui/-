@@ -20,6 +20,7 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  res.set('X-Content-Type-Options', 'nosniff');
   const start = Date.now();
   const origEnd = res.end;
   res.end = function (...args) {
